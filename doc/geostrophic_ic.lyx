@@ -1,0 +1,331 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Geostrophic balanced initial condition
+\end_layout
+
+\begin_layout Author
+Martin Schreiber
+\end_layout
+
+\begin_layout Date
+2021-02-19
+\end_layout
+
+\begin_layout Standard
+Given the SWE in the advection-based formulation ( see Robert Sadourny)
+\begin_inset Formula 
+\begin{align*}
+\frac{\partial\boldsymbol{V}}{\partial t}+\eta\boldsymbol{k}\times\left(P\boldsymbol{V}\right)+\nabla\left(P+\frac{1}{2}\left(\boldsymbol{V}\cdot\boldsymbol{V}\right)\right) & =0\\
+\frac{\partial P}{\partial t}+\nabla\cdot(P\boldsymbol{V}) & =0
+\end{align*}
+
+\end_inset
+
+with the vorticity given by
+\begin_inset Formula 
+\[
+\eta=\frac{rot(V)}{P}+f
+\]
+
+\end_inset
+
+and 
+\begin_inset Formula $\boldsymbol{k}$
+\end_inset
+
+ an normal to the plane with 
+\begin_inset Formula $f$
+\end_inset
+
+ the Coriolis effect on the 
+\begin_inset Formula $f$
+\end_inset
+
+-plane.
+\end_layout
+
+\begin_layout Section
+Implementation
+\end_layout
+
+\begin_layout Standard
+Pressure is related to surface height times gravity
+\begin_inset Formula 
+\[
+P=hg.
+\]
+
+\end_inset
+
+The other variables are given as follows:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+U & =Pu\\
+V & =Pv
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+H=P+\frac{1}{2}\left(U^{2}+V^{2}\right)
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\eta=\frac{v_{x}-u_{y}}{P}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+\frac{\partial u}{\partial t}-\eta V+H_{x} & =0\\
+\frac{\partial v}{\partial t}+\eta U+H_{y} & =0\\
+\frac{\partial P}{\partial t}+U_{x}+V_{y} & =0
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Geostrophic case
+\end_layout
+
+\begin_layout Subsection
+Linear equations
+\end_layout
+
+\begin_layout Standard
+For linear equations we get
+\begin_inset Formula 
+\begin{align*}
+\frac{\partial\boldsymbol{V}}{\partial t}+f\boldsymbol{k}\times\boldsymbol{V}+\nabla P & =0\\
+\frac{\partial P}{\partial t}+\overline{P}\nabla\cdot\boldsymbol{V} & =0.
+\end{align*}
+
+\end_inset
+
+For 
+\begin_inset Formula $\frac{\partial P}{\partial t}=0$
+\end_inset
+
+ we get a divergence free requirement 
+\begin_inset Formula 
+\begin{align*}
+\nabla\cdot\boldsymbol{V} & =0
+\end{align*}
+
+\end_inset
+
+on the initial field.
+\end_layout
+
+\begin_layout Standard
+For 
+\begin_inset Formula $\frac{\partial\boldsymbol{V}}{\partial t}$
+\end_inset
+
+ we get
+\begin_inset Formula 
+\begin{align*}
+fv & =\nabla_{x}P\\
+-fu & =\nabla_{y}P.
+\end{align*}
+
+\end_inset
+
+Assuming a constant field along the 
+\begin_inset Formula $x$
+\end_inset
+
+ axis, we get a zero condition
+\begin_inset Formula 
+\[
+v=0
+\]
+
+\end_inset
+
+and
+\begin_inset Formula 
+\[
+u=-\frac{1}{f}\nabla_{y}P.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Nonlinear equations
+\end_layout
+
+\begin_layout Standard
+Similar to the linear equations, we assume a constant behavior along the
+ 
+\begin_inset Formula $x$
+\end_inset
+
+ axis, hence 
+\begin_inset Formula 
+\[
+\partial_{x}\cdot=0
+\]
+
+\end_inset
+
+ on all variables.
+\end_layout
+
+\begin_layout Standard
+Furthermore, we again assume a zero velocity along the 
+\begin_inset Formula $y$
+\end_inset
+
+ axis, hence 
+\begin_inset Formula 
+\[
+v=0.
+\]
+
+\end_inset
+
+The equations can then be simplified to
+\begin_inset Formula 
+\begin{align*}
+\frac{\partial u}{\partial t} & =0\\
+\frac{\partial v}{\partial t}+\eta U+H_{y} & =0\\
+\frac{\partial P}{\partial t} & =0
+\end{align*}
+
+\end_inset
+
+with the vorticity given by
+\begin_inset Formula 
+\[
+\eta=f.
+\]
+
+\end_inset
+
+Hence, we get
+\begin_inset Formula 
+\begin{align*}
+fU & =-H_{y}\\
+fPu & =-\partial_{y}\left(P+\frac{1}{2}\left(U^{2}+V^{2}\right)\right)\\
+fPu & =-P_{y}-\left(Pu\right)_{y}\\
+fPu+P_{y}u+Pu_{y} & =-P_{y}\\
+\left(\left(fP+P_{y}\right)+P\partial_{y}\right)u & =-P_{y}.
+\end{align*}
+
+\end_inset
+
+Let's assume that 
+\begin_inset Formula $u$
+\end_inset
+
+ is given.
+ Then, we get
+\begin_inset Formula 
+\[
+fPu+P_{y}+P_{y}u+Pu_{y}=0.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

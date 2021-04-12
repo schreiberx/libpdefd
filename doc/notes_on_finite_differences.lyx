@@ -1,0 +1,746 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 3cm
+\topmargin 2cm
+\rightmargin 3cm
+\bottommargin 2cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Notes on 1D finite difference boundary conditions
+\end_layout
+
+\begin_layout Author
+Martin Schreiber
+\end_layout
+
+\begin_layout Date
+2021-02-06
+\end_layout
+
+\begin_layout Standard
+Let a one dimensional domain be given by 
+\begin_inset Formula $\Omega\in\mathbb{R}$
+\end_inset
+
+.
+ We define a grid 
+\begin_inset Formula $G=\left\{ x_{0},\ldots,x_{N-1}\right\} $
+\end_inset
+
+ on this domain with 
+\begin_inset Formula $N$
+\end_inset
+
+ grid points 
+\begin_inset Formula $x_{i}$
+\end_inset
+
+ so that 
+\begin_inset Formula $x_{0}$
+\end_inset
+
+ is the lower and 
+\begin_inset Formula $x_{N-1}$
+\end_inset
+
+ the upper limit of the domain, hence 
+\begin_inset Formula $\forall x\in\Omega:x_{0}\leq x$
+\end_inset
+
+ and 
+\begin_inset Formula $\forall x\in\Omega:x_{N-1}\geq x$
+\end_inset
+
+.
+ We also write 
+\begin_inset Formula $d\Omega=\{x_{0},x_{N-2}\}$
+\end_inset
+
+.
+ All grid points are required to be totally ordered so that 
+\begin_inset Formula $x_{i}<x_{i+1}$
+\end_inset
+
+.
+ Since this grid will be reduced in the following discussion, we refer to
+ it as the 
+\emph on
+full grid
+\emph default
+.
+\end_layout
+
+\begin_layout Standard
+A function on this grid is approximated by assigning each grid point a function
+ value.
+ At the 
+\begin_inset Formula $i$
+\end_inset
+
+-th grid point 
+\begin_inset Formula $x_{i}$
+\end_inset
+
+, let this function value be denoted by 
+\begin_inset Formula $y_{i}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Next, we investigate different boundary conditions and how to cope with
+ them.
+ Here, we differentiate between the grid itself and the locations where
+ we have degrees of freedom (DoF) which are independent to each other.
+ The grid locations of these DoF will be denoted by 
+\begin_inset Formula $D$
+\end_inset
+
+ which is a subset of the total grid points 
+\begin_inset Formula $D\subseteq G$
+\end_inset
+
+.
+ We refer to this as the 
+\emph on
+DoF grid
+\emph default
+.
+\end_layout
+
+\begin_layout Section
+Finite differences
+\end_layout
+
+\begin_layout Standard
+In the following sections we approximate differential operators with finite
+ differences.
+ These finite differences can be written as 
+\begin_inset Quotes eld
+\end_inset
+
+stencils
+\begin_inset Quotes erd
+\end_inset
+
+ which can again be expressed as linear algebra.
+ Given a matrix 
+\begin_inset Formula $A$
+\end_inset
+
+, we can write discrete finite difference stencils in each row.
+ Then, we get
+\begin_inset Formula 
+\[
+\left[\begin{array}{ccccccc}
+a_{0,0} & a_{0,1} & a_{0,2} & a_{0,3} & \cdots & a_{0,N-2} & a_{0,N-1}\\
+a_{1,0} & a_{1,1} & a_{1,2} & a_{1,3} & \cdots & a_{1,N-2} & a_{1,N-1}\\
+a_{2,0} & a_{2,1} & a_{2,2} & a_{2,3} & \cdots & a_{2,N-2} & a_{2,N-1}\\
+\vdots & \vdots & \vdots & \vdots & \ddots & \vdots & \vdots\\
+a_{N-2,0} & a_{N-2,1} & a_{N-2,2} & a_{N-2,3} & \cdots & a_{N-2,N-2} & a_{N-2,N-1}\\
+a_{N-1,0} & a_{N-1,1} & a_{N-1,2} & a_{N-1,3} & \cdots & a_{N-1,N-2} & a_{N-1,N-1}
+\end{array}\right]\left[\begin{array}{c}
+y_{0}\\
+y_{1}\\
+y_{2}\\
+y_{3}\\
+\vdots\\
+y_{N-2}\\
+y_{N-1}
+\end{array}\right]=\left[\begin{array}{c}
+u_{0}\\
+u_{1}\\
+u_{2}\\
+u_{3}\\
+\vdots\\
+u_{N-2}\\
+u_{N-1}
+\end{array}\right]
+\]
+
+\end_inset
+
+with 
+\begin_inset Formula $u$
+\end_inset
+
+ the approximated solution.
+\end_layout
+
+\begin_layout Section
+Boundary conditions
+\end_layout
+
+\begin_layout Subsection
+Periodic boundary conditions
+\end_layout
+
+\begin_layout Standard
+For periodic boundary conditions, the function values at the last grid point
+ and the first grid point match, hence 
+\begin_inset Formula $y_{0}=y_{N-1}$
+\end_inset
+
+.
+ Therefore, the unique set of DoFs does not include one of these boundary
+ grid points and we simply exclude the last one.
+ We then get
+\begin_inset Formula 
+\[
+D=\left\{ x_{0},\ldots,x_{N-2}\right\} 
+\]
+
+\end_inset
+
+for the DoF grid.
+\end_layout
+
+\begin_layout Subsection
+Dirichlet boundary conditions
+\end_layout
+
+\begin_layout Standard
+Using Dirichlet boundary conditions the values at the boundary grid points
+ are directly provided.
+ For time-invariant boundary conditions we get 
+\begin_inset Formula $y_{0}=d_{0}$
+\end_inset
+
+ and 
+\begin_inset Formula $y_{N-1}=d_{N-1}$
+\end_inset
+
+ where 
+\begin_inset Formula $\alpha,\beta\in\mathbb{R}$
+\end_inset
+
+ are the Dirichlet boundary conditions.
+ This obviously reduces the number of DoFs to
+\begin_inset Formula 
+\[
+D=\left\{ x_{1},\ldots,x_{N-2}\right\} 
+\]
+
+\end_inset
+
+and we continue to discuss how this is realized with finite differences.
+\end_layout
+
+\begin_layout Standard
+Using the linear algebra matrix-vector notation we can directly include
+ the Dirichlet boundary conditions in the matrix by writing
+\begin_inset Formula 
+\[
+\left[\begin{array}{ccccccc}
+a_{1,0}d_{0} & a_{1,1} & a_{1,2} & a_{1,3} & \cdots & a_{1,N-2} & a_{1,N-1}d_{N-1}\\
+a_{2,0}d_{0} & a_{2,1} & a_{2,2} & a_{2,3} & \cdots & a_{2,N-2} & a_{2,N-1}d_{N-1}\\
+\vdots & \vdots & \vdots & \vdots & \ddots & \vdots & \vdots\\
+a_{N-2,0}d_{0} & a_{N-2,1} & a_{N-2,2} & a_{N-2,3} & \cdots & a_{N-2,N-2} & a_{N-2,N-1}d_{N-1}
+\end{array}\right]\left[\begin{array}{c}
+1\\
+y_{1}\\
+y_{2}\\
+y_{3}\\
+\vdots\\
+y_{N-2}\\
+1
+\end{array}\right]=\left[\begin{array}{c}
+u_{1}\\
+u_{2}\\
+\vdots\\
+u_{n-1}
+\end{array}\right]
+\]
+
+\end_inset
+
+where we already skipped the first and last row.
+ We can further reformulate this to
+\begin_inset Formula 
+\[
+\left[\begin{array}{ccccc}
+a_{1,1} & a_{1,2} & a_{1,3} & \cdots & a_{1,N-2}\\
+a_{2,1} & a_{2,2} & a_{2,3} & \cdots & a_{2,N-2}\\
+\vdots & \vdots & \vdots & \ddots & \vdots\\
+a_{N-2,1} & a_{N-2,2} & a_{N-2,3} & \cdots & a_{N-2,N-2}
+\end{array}\right]\left[\begin{array}{c}
+y_{1}\\
+y_{2}\\
+y_{3}\\
+\vdots\\
+y_{N-2}
+\end{array}\right]+\left[\begin{array}{c}
+a_{1,0}d_{0}+a_{1,N-1}d_{N-1}\\
+a_{2,0}d_{0}+a_{2,N-1}d_{N-1}\\
+\vdots\\
+a_{N-2,0}d_{0}+a_{N-1,N-1}d_{N-1}
+\end{array}\right]=\left[\begin{array}{c}
+u_{1}\\
+u_{2}\\
+u_{3}\\
+\vdots\\
+u_{n-1}
+\end{array}\right]
+\]
+
+\end_inset
+
+where we introduced a proxy vector on the RHS.
+ Hence, we can write this system as
+\begin_inset Formula 
+\[
+Ay+c=u.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Neumann boundary conditions
+\end_layout
+
+\begin_layout Standard
+With Neumann boundary conditions the derivative on the boundary is specified,
+ e.g.
+\begin_inset Formula 
+\[
+\left.\frac{df(x)}{dx}\right|_{x=x_{0}}=n_{0}\,\,\,\text{and}\,\,\,\left.\frac{df(x)}{dx}\right|_{x=x_{N-1}}=n_{N-1}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In matrix format we can write
+\begin_inset Formula 
+\[
+\left[\begin{array}{ccccccc}
+a'_{0,0} & a'_{0,1} & a'_{0,2} & a'_{0,3} & \cdots & a'_{0,N-2} & a'_{0,N-1}\\
+a_{1,0} & a_{1,1} & a_{1,2} & a_{1,3} & \cdots & a_{1,N-2} & a_{1,N-1}\\
+a_{2,0} & a_{2,1} & a_{2,2} & a_{2,3} & \cdots & a_{2,N-2} & a_{2,N-1}\\
+\vdots & \vdots & \vdots & \vdots & \ddots & \vdots & \vdots\\
+a_{N-2,0} & a_{N-2,1} & a_{N-2,2} & a_{N-2,3} & \cdots & a_{N-2,N-2} & a_{N-2,N-1}\\
+a'_{N-1,0} & a'_{N-1,1} & a'_{N-1,2} & a'_{N-1,3} & \cdots & a'_{N-1,N-2} & a'_{N-1,N-1}
+\end{array}\right]\left[\begin{array}{c}
+y_{0}\\
+y_{1}\\
+y_{2}\\
+y_{3}\\
+\vdots\\
+y_{N-2}\\
+y_{N-1}
+\end{array}\right]=\left[\begin{array}{c}
+n_{0}\\
+u_{1}\\
+u_{2}\\
+u_{3}\\
+\vdots\\
+u_{N-2}\\
+n_{N-1}
+\end{array}\right]
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $a'$
+\end_inset
+
+ relates to the stencil for the Neumann boundary condition.
+\end_layout
+
+\begin_layout Standard
+Solving for 
+\begin_inset Formula $y_{0}$
+\end_inset
+
+ we get
+\begin_inset Formula 
+\[
+y_{0}=\frac{1}{a'_{0,0}}\left(n_{0}-\sum_{i=1}^{N-1}a'_{0,i}y_{i}\right)
+\]
+
+\end_inset
+
+where we obviously assumed that the stencil does not extend the full domain
+ (
+\begin_inset Formula $a'_{0,N-1}=0$
+\end_inset
+
+) and for 
+\begin_inset Formula $y_{N-1}$
+\end_inset
+
+ we get
+\begin_inset Formula 
+\[
+y_{N-1}=\frac{1}{a'_{N-1,N-1}}\left(n_{N-1}-\sum_{i=1}^{N-1}a'_{N-1,i}y_{i}\right)
+\]
+
+\end_inset
+
+with a similar assumption as before (
+\begin_inset Formula $a'_{N-1,0}=0$
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+We can now express 
+\begin_inset Formula $y_{0}$
+\end_inset
+
+ and 
+\begin_inset Formula $y_{N-1}$
+\end_inset
+
+ in terms of linear algebra and include this in our linear system of equations.
+ Given the matrix-vector notation from above, we can write the 
+\begin_inset Formula $j$
+\end_inset
+
+-th line as
+\begin_inset Formula 
+\[
+\sum_{i=0}^{N-1}a{}_{j,i}y_{i}=u_{j}
+\]
+
+\end_inset
+
+and putting the first Neumann condition for 
+\begin_inset Formula $y_{0}$
+\end_inset
+
+ in it we get
+\begin_inset Formula 
+\begin{align*}
+a_{j,0}\frac{1}{a'_{0,0}}\left(n_{0}-\sum_{i=1}^{N-1}a'_{0,i}y_{i}\right)+\sum_{i=1}^{N-1}a_{j,i}y_{i} & =u_{j}\\
+\frac{a_{j,0}}{a'_{0,0}}n_{0}-\frac{a_{j,0}}{a'_{0,0}}\sum_{i=1}^{N-1}a'_{0,i}y_{i}+\sum_{i=1}^{N-1}a_{j,i}y_{i} & =u_{j}\\
+\frac{a_{j,0}}{a'_{0,0}}n_{0}+\sum_{i=1}^{N-1}\left(a_{j,i}-\frac{a_{j,0}}{a'_{0,0}}a'_{0,i}\right)y_{i} & =u_{j}.
+\end{align*}
+
+\end_inset
+
+For the Neumann boundary condition at the end we get
+\begin_inset Formula 
+\[
+\frac{a_{j,N-1}}{a'_{N-1,N-1}}n_{0}+\sum_{i=0}^{N}\left(a_{j,i}-\frac{a_{j,N-1}a'_{N-1,i}}{a'_{N-1,N-1}}\right)y_{i}=u_{j}.
+\]
+
+\end_inset
+
+Again, we can write this as a linear system
+\begin_inset Formula 
+\[
+Ay+c=u.
+\]
+
+\end_inset
+
+As a final remark, note that 
+\begin_inset Formula $a'$
+\end_inset
+
+ could be the stencil of arbitrary differential order.
+\end_layout
+
+\begin_layout Subsection
+Notes on implementation
+\end_layout
+
+\begin_layout Standard
+The Dirichlet and Neumann condition can be implemented straight-forward.
+ First of all, we assume that the matrix 
+\begin_inset Formula $A$
+\end_inset
+
+ is initially set up without caring about any boundary conditions.
+\end_layout
+
+\begin_layout Standard
+Then, we can implement both boundary conditions independent to each other
+ by accumulating changes in a new (temporary) matrix 
+\begin_inset Formula $A$
+\end_inset
+
+ and the vector 
+\begin_inset Formula $c$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+Concatenation of operators
+\end_layout
+
+\begin_layout Standard
+We continue to investigate the concatenation of different operators since
+ we will investigate further to apply the finite differences in higher dimension
+s.
+\end_layout
+
+\begin_layout Standard
+First, let 
+\begin_inset Formula $A^{i}$
+\end_inset
+
+ and 
+\begin_inset Formula $c^{i}$
+\end_inset
+
+ be the discretized for of the function 
+\begin_inset Formula $f^{i}(y)$
+\end_inset
+
+ with 
+\begin_inset Formula $y^{i}$
+\end_inset
+
+ and 
+\begin_inset Formula $u^{i}$
+\end_inset
+
+ the state variables related to the 
+\begin_inset Formula $i$
+\end_inset
+
+-th operator.
+ E.g., for two operators, we get
+\begin_inset Formula 
+\begin{align*}
+A^{0}y^{0}+c^{0} & =u^{0}\\
+A^{1}y^{1}+c^{1} & =u^{1}.
+\end{align*}
+
+\end_inset
+
+In this example, 
+\begin_inset Formula $A^{0}$
+\end_inset
+
+ could, e.g., represent a differential operator and 
+\begin_inset Formula $A^{1}$
+\end_inset
+
+ an interpolation projecting the points from one grid space to another one.
+ We can reformulate the left hand side using homogeneous vectors, given
+ by 
+\begin_inset Formula 
+\[
+\tilde{v}=(v_{0},v_{1},v_{2},...,v_{N-1},1).
+\]
+
+\end_inset
+
+Using
+\begin_inset Formula 
+\[
+\tilde{A}^{i}=\left[\begin{array}{cc}
+A^{i} & c^{i}\\
+0 & 1
+\end{array}\right]
+\]
+
+\end_inset
+
+we can write
+\begin_inset Formula 
+\begin{align*}
+\tilde{A}^{0}\tilde{y}^{0} & =\tilde{u}^{0}\\
+\tilde{A}^{1}\tilde{y}^{1} & =\tilde{u}^{1}.
+\end{align*}
+
+\end_inset
+
+Finally, applying first 
+\begin_inset Formula $f^{0}$
+\end_inset
+
+ and then 
+\begin_inset Formula $f^{1}$
+\end_inset
+
+ written as a concatenation 
+\begin_inset Formula $f^{1}\circ f^{0}$
+\end_inset
+
+ can be written as
+\begin_inset Formula 
+\[
+\tilde{A}^{1}\tilde{A}^{0}\tilde{y}^{0}=\tilde{u}^{0,1}
+\]
+
+\end_inset
+
+with 
+\begin_inset Formula $\tilde{u}^{0,1}$
+\end_inset
+
+ denoting the result.
+\end_layout
+
+\begin_layout Standard
+In case that one likes to apply the discrete operators individually, we
+ get
+\begin_inset Formula 
+\[
+\tilde{A}^{i}\tilde{A}^{j}=\left[\begin{array}{cc}
+A^{i} & c^{i}\\
+0 & 1
+\end{array}\right]\left[\begin{array}{cc}
+A^{j} & c^{j}\\
+0 & 1
+\end{array}\right]=\left[\begin{array}{cc}
+A^{i}A^{j} & A^{i}c^{j}+c^{i}\\
+0 & 1
+\end{array}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Extension to higher dimensions
+\end_layout
+
+\begin_layout Standard
+For a given operator 
+\begin_inset Formula $A^{i}$
+\end_inset
+
+ in the 
+\begin_inset Formula $i$
+\end_inset
+
+-th dimension we need to extend it to higher dimensions.
+ We know that extending it is based on repeating this operator in all dimensions
+ in which it doesn't operator on.
+ Let 
+\begin_inset Formula $S=(s_{0},s_{1},s_{2})$
+\end_inset
+
+ be the number of degrees of freedom in three dimensions and an operator
+ 
+\begin_inset Formula $A$
+\end_inset
+
+ given for the 2nd dimension.
+ Let 
+\begin_inset Formula $I(x)$
+\end_inset
+
+ be the identity matrix of size 
+\begin_inset Formula $x$
+\end_inset
+
+ and 
+\begin_inset Formula $\varotimes$
+\end_inset
+
+ be the Kronecker product.
+ Then, the matrix for the three dimensional space is given by 
+\begin_inset Formula 
+\[
+A=I(s_{0})\varotimes A^{i}\varotimes I(s_{2})
+\]
+
+\end_inset
+
+or in general by
+\begin_inset Formula 
+\[
+A=\left(\prod_{i=0}^{j-1}\varotimes I(s_{i})\right)\varotimes A^{j}\left(\prod_{i=j+1}^{D-1}\varotimes I(s_{i})\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
