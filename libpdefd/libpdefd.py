@@ -863,7 +863,17 @@ class GridInfoND:
     
     
     def __getitem__(self, i):
-        return self.grids1d_list[i]
+        
+        if isinstance(i, str):
+            
+            for g in self.grids1d_list:
+                if g.name == i:
+                    return g
+                
+            raise Exception("GridInfoND '"+str(i)+"' not found")
+        
+        else:
+            return self.grids1d_list[i]
 
     def __setitem__(self, i, data):
         self.grids1d_list[i] = data
@@ -1053,6 +1063,8 @@ class _OperatorBase:
     
     def solve(self, x, solver_tol=None, max_iterations=None):
         if isinstance(x, np.ndarray):
+            raise Exception("TODO")
+        
             import libtide.linalg.iterative_solvers as iterative_solvers
             b = x.flatten()-self.c
 

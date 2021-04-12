@@ -8,9 +8,9 @@ import sys
 
 class _VisualizationBase:
     def __init__(
-            self,
-            *args,
-            **kwargs,
+        self,
+        *args,
+        **kwargs,
     ):
         pass
     
@@ -28,30 +28,29 @@ class _VisualizationBase:
 class Visualization1D(_VisualizationBase):
 
     def __init__(
-            self,
-            *args,
-            **kwargs,
+        self,
+        *args,
+        **kwargs,
     ):
         _VisualizationBase.__init__(self)
         self.setup(*args, **kwargs)
-
-
-        
+    
+    
     def setup(
-            self,
-            use_symlog = False,
+        self,
+        use_symlog = False,
     ):
         self.use_symlog = use_symlog
         self.firsttime = True
         
         self.fig, self.ax = pc.setup()
         self.ps = pc.PlotStyles()
-        
-        
+    
+    
     def _update_plots_firsttime(
-            self,
-            grids_list : list,
-            variables_list : list,
+        self,
+        grids_list : list,
+        variables_list : list,
     ):
         assert(len(grids_list) == len(variables_list))
         
@@ -76,12 +75,12 @@ class Visualization1D(_VisualizationBase):
         self.ax.set_ylim(-maxy, maxy)
         if self.use_symlog:
             self.ax.set_yscale("symlog", linthresh=1e-4)
-        
-        
+    
+    
     def update_plots(
-            self,
-            grids_list,
-            variables_list
+        self,
+        grids_list,
+        variables_list
     ):
         if not isinstance(variables_list, list):
             variables_list = [variables_list]
@@ -102,9 +101,9 @@ class Visualization1D(_VisualizationBase):
 class Visualization2DMesh(_VisualizationBase):
 
     def __init__(
-            self,
-            *args,
-            **kwargs,
+        self,
+        *args,
+        **kwargs,
     ):
         _VisualizationBase.__init__(self)
         self.setup(*args, **kwargs)
@@ -112,12 +111,12 @@ class Visualization2DMesh(_VisualizationBase):
 
         
     def setup(
-            self,
-            vis_dim_x = 0,
-            vis_dim_y = 1,
-            vis_slice : list = [],
-            rescale = 1,
-            use_symlog = False
+        self,
+        vis_dim_x = 0,
+        vis_dim_y = 1,
+        vis_slice : list = [],
+        rescale = 1,
+        use_symlog = False
     ):
         """
         Prepare plotting
@@ -132,55 +131,53 @@ class Visualization2DMesh(_VisualizationBase):
         
         self.fig, self.ax = pc.setup()
         self.ps = pc.PlotStyles()
-        
-        
+    
+    
     def get_dimreduced_data(
-            self,
-            data
+        self,
+        variable_data
     ):
+        slices = [slice(0, variable_data.shape[i]) for i in range(len(variable_data.shape))]
         
-        slices = [slice(0, data.shape[i]) for i in range(len(data.shape))]
-        
-        for i in range(len(data.shape)):
+        for i in range(len(variable_data.shape)-1, -1, -1):
             if i == self.vis_dim_x or i == self.vis_dim_y:
                 continue
             
             slices[i] = self.vis_slice[i]
-
-        data = data[tuple(slices)]
+ 
+        variable_data = variable_data[tuple(slices)]
         
-        if self.vis_dim_x < self.vis_dim_y:
-            data = data.transpose()
+        # y for row index, x for col index
+        variable_data = variable_data.transpose()
         
-        return data
+        #if self.vis_dim_x < self.vis_dim_y:
+        #    data = data.transpose()
+        #print(data.shape)
+        
+        return variable_data
     
     
     def _update_plots_firsttime(
-            self,
-            grid_info_nd : libpdefd.GridInfoND,
-            variable
+        self,
+        grid_info_nd : libpdefd.GridInfoND,
+        variable_data
     ):
-        if isinstance(variable, libpdefd.VariableND):
-            data = self.get_dimreduced_data(variable.data)
-        else:
-            data = variable
-
         if 0:
-            self.maxy = np.max(np.abs(data))
+            self.maxy = np.max(np.abs(variable_data))
             if self.maxy <= 1e-12:
                 self.maxy = 1e-12
-                
+            
             vmin = -self.maxy*self.rescale
             vmax = self.maxy*self.rescale
-            
+        
         else:
-            self.maxy = np.max(data)
-            self.miny = np.min(data)
+            self.maxy = np.max(variable_data)
+            self.miny = np.min(variable_data)
             
             if self.maxy-self.miny <= 1e-12:
                 self.maxy += 1e-12
                 self.miny -= 1e-12
-
+            
             vmin = self.miny*self.rescale
             vmax = self.maxy*self.rescale
         
@@ -189,64 +186,76 @@ class Visualization2DMesh(_VisualizationBase):
         dx = grid_info_nd.grids1d_list[0].domain_end - grid_info_nd.grids1d_list[0].domain_start
         dy = grid_info_nd.grids1d_list[1].domain_end - grid_info_nd.grids1d_list[1].domain_start
         
-        aspect = dy/dx*data.shape[1]/data.shape[0]
+        num_ticks = 4
         
-        if 0:
-            self.colormesh = plt.pcolormesh(
+        if 1:
+            self.plotobject = plt.pcolormesh(
                 mesh_grid_coords[self.vis_dim_x],
                 mesh_grid_coords[self.vis_dim_y],
-                data,
+                variable_data,
                 vmin = vmin,
                 vmax = vmax,
                 cmap = "viridis"
             )
 
             self.ax.set_aspect(1.0)
+            
+            self.ax.set_xticks(np.linspace(mesh_grid_coords[self.vis_dim_x][0], mesh_grid_coords[self.vis_dim_x][-1], num_ticks, endpoint=True))
+            self.ax.set_yticks(np.linspace(mesh_grid_coords[self.vis_dim_y][0], mesh_grid_coords[self.vis_dim_y][-1], num_ticks, endpoint=True))
         
         else:
-            self.colormesh = plt.imshow(
-                np.flip(data, axis=0),
+            aspect = dy/dx*variable_data.shape[1]/variable_data.shape[0]
+        
+            self.plotobject = plt.imshow(
+                np.flip(variable_data, axis=0),
                 vmin = vmin,
                 vmax = vmax,
                 cmap = "viridis",
                 aspect = aspect
             )
-        #print(aspect)
+
+            self.ax.set_xticks(np.linspace(0, variable_data.shape[1], num_ticks, endpoint=False))
+            self.ax.set_yticks(np.linspace(0, variable_data.shape[0], num_ticks, endpoint=False))
+            
+        xtickslabels = ["{:g}".format(i) for i in np.linspace(grid_info_nd.grids1d_list[0].domain_start, grid_info_nd.grids1d_list[0].domain_end, 4, endpoint=True)]
+        self.ax.set_xticklabels(xtickslabels)
+        
+        ytickslabels = ["{:g}".format(i) for i in np.linspace(grid_info_nd.grids1d_list[1].domain_start, grid_info_nd.grids1d_list[1].domain_end, 4, endpoint=True)]
+        self.ax.set_yticklabels(ytickslabels)
         
         self.ax.set_xlabel("D"+str(self.vis_dim_x))
         self.ax.set_ylabel("D"+str(self.vis_dim_y))
         
-        self.cbar = self.fig.colorbar(self.colormesh)
-        #self.cbar.set_label('rho variable')
+        self.cbar = self.fig.colorbar(self.plotobject)
         
         self.fig.tight_layout(rect=[0,0,1,.9])
     
     
-    
     def update_plots(
-            self,
-            grid_info_nd,
-            variable_data
+        self,
+        grid_info_nd,
+        variable_data
     ):
+        dim_reduced_data = self.get_dimreduced_data(variable_data)
+        
         if self.firsttime:
-            self._update_plots_firsttime(grid_info_nd, variable_data)
+            self._update_plots_firsttime(grid_info_nd, dim_reduced_data)
             self.firsttime = False
             return
         
         # Update limits
-        data = self.get_dimreduced_data(variable_data)
-        maxy = np.max(np.abs(data))
+        maxy = np.max(np.abs(dim_reduced_data))
         
-        if maxy > self.maxy or True:
-            self.cbar.remove()
-            self.colormesh.remove()
-            self._update_plots_firsttime(grid_info_nd, variable_data)
-            return
+        if 1:
+            if maxy > self.maxy or True:
+                self.cbar.remove()
+                self.plotobject.remove()
+                self._update_plots_firsttime(grid_info_nd, dim_reduced_data)
+                return
             
-        self.colormesh.set_array(variable_data)
-
-
+        self.plotobject.set_array(dim_reduced_data)
+    
+    
     def savefig(self, filename, **kwargs):
         self.fig.savefig(filename, **kwargs)
-        
-        
+    

@@ -1,7 +1,8 @@
-import libtide.libfd.libfd as libfd
-import libtide.libfd.libfd_tools as libfd_tools
-import libtide.libfd.libnsec as libsimpde
-import libtide.libfd.atmos_consts as atmos_consts
+
+
+import libpdefd
+import libpdefd.pdes.navierstokes as pde_navierstokes
+import libpdefd.pdes.atmos_consts as atmos_consts
 import numpy as np
 from scipy.interpolate import interp1d
 import sys
@@ -22,28 +23,28 @@ class Benchmarks:
         self,
         simconfig
     ):
-        simconfig.boundary_conditions_u = [[libfd.BoundaryDirichlet(0) for _ in range(2)] for _D in range(self.D)]
-        simconfig.boundary_conditions_w = [[libfd.BoundaryDirichlet(0) for _ in range(2)] for _D in range(self.D)]
-        simconfig.boundary_conditions_rho = [[libfd.BoundaryDirichlet(simconfig.sim_rho_avg) for _ in range(2)] for _D in range(self.D)]
-        simconfig.boundary_conditions_p = [[libfd.BoundaryDirichlet(simconfig.sim_p_avg) for _ in range(2)] for _D in range(self.D)]
-        simconfig.boundary_conditions_t = [[libfd.BoundaryDirichlet(simconfig.sim_t_avg) for _ in range(2)] for _D in range(self.D)]
-        simconfig.boundary_conditions_rho_u = [[libfd.BoundaryDirichlet(simconfig.sim_rho_avg*0) for _ in range(2)] for _D in range(self.D)]
-        simconfig.boundary_conditions_rho_w = [[libfd.BoundaryDirichlet(simconfig.sim_rho_avg*0) for _ in range(2)] for _D in range(self.D)]
-        simconfig.boundary_conditions_rho_t = [[libfd.BoundaryDirichlet(simconfig.sim_rho_avg*simconfig.sim_t_avg) for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_u = [[libpdefd.BoundaryDirichlet(0) for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_w = [[libpdefd.BoundaryDirichlet(0) for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_rho = [[libpdefd.BoundaryDirichlet(simconfig.const_rho0) for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_p = [[libpdefd.BoundaryDirichlet(simconfig.const_p0) for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_t = [[libpdefd.BoundaryDirichlet(simconfig.sim_t_avg) for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_rho_u = [[libpdefd.BoundaryDirichlet(simconfig.const_rho0*0) for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_rho_w = [[libpdefd.BoundaryDirichlet(simconfig.const_rho0*0) for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_rho_t = [[libpdefd.BoundaryDirichlet(simconfig.const_rho0*simconfig.sim_t_avg) for _ in range(2)] for _D in range(self.D)]
     
     
     def setup_simconfig_bc_horizontal_periodic(
         self,
         simconfig
     ):
-        simconfig.boundary_conditions_u = [[libfd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
-        simconfig.boundary_conditions_w = [[libfd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
-        simconfig.boundary_conditions_rho = [[libfd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
-        simconfig.boundary_conditions_p = [[libfd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
-        simconfig.boundary_conditions_t = [[libfd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
-        simconfig.boundary_conditions_rho_u = [[libfd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
-        simconfig.boundary_conditions_rho_w = [[libfd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
-        simconfig.boundary_conditions_rho_t = [[libfd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_u = [[libpdefd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_w = [[libpdefd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_rho = [[libpdefd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_p = [[libpdefd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_t = [[libpdefd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_rho_u = [[libpdefd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_rho_w = [[libpdefd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
+        simconfig.boundary_conditions_rho_t = [[libpdefd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
     
     def setup_simconfig_bc_vertical_periodic_dirichlet(
         self,
@@ -52,18 +53,19 @@ class Benchmarks:
         """
         Zero velocities at top and bottom boundaries
         """
-        simconfig.boundary_conditions_u = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                            [libfd.BoundarySymmetric(), libfd.BoundarySymmetric()],
+        simconfig.boundary_conditions_u = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                            [libpdefd.BoundarySymmetric(), libpdefd.BoundarySymmetric()],
                                         ]
-        simconfig.boundary_conditions_w = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                            [libfd.BoundaryDirichlet(0), libfd.BoundaryDirichlet(0)],
+        simconfig.boundary_conditions_w = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                            [libpdefd.BoundaryDirichlet(0), libpdefd.BoundaryDirichlet(0)],
                                         ]
-        simconfig.boundary_conditions_rho_u = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                            [libfd.BoundarySymmetric(), libfd.BoundarySymmetric()],
+        simconfig.boundary_conditions_rho_u = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                            [libpdefd.BoundarySymmetric(), libpdefd.BoundarySymmetric()],
                                         ]
-        simconfig.boundary_conditions_rho_w = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                            [libfd.BoundaryDirichlet(0), libfd.BoundaryDirichlet(0)],
+        simconfig.boundary_conditions_rho_w = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                            [libpdefd.BoundaryDirichlet(0), libpdefd.BoundaryDirichlet(0)],
                                         ]
+        
         
         if 0:
             """
@@ -72,26 +74,26 @@ class Benchmarks:
             f = interp1d(atmos_consts.altitude, atmos_consts.density, kind='cubic')
             rho_bottom = f(simconfig.domain_start[1])
             rho_top = f(simconfig.domain_end[1])
-            simconfig.boundary_conditions_rho = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                                [libfd.BoundaryDirichlet(rho_bottom), libfd.BoundaryDirichlet(rho_top)],
+            simconfig.boundary_conditions_rho = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                                [libpdefd.BoundaryDirichlet(rho_bottom), libpdefd.BoundaryDirichlet(rho_top)],
                                             ]
             
             f = interp1d(atmos_consts.altitude, atmos_consts.pressure, kind='cubic')
             p_bottom = f(simconfig.domain_start[1])
             p_top = f(simconfig.domain_end[1])
-            simconfig.boundary_conditions_p = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                                [libfd.BoundaryDirichlet(p_bottom), libfd.BoundaryDirichlet(p_top)],
+            simconfig.boundary_conditions_p = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                                [libpdefd.BoundaryDirichlet(p_bottom), libpdefd.BoundaryDirichlet(p_top)],
                                             ]
             
             f = interp1d(atmos_consts.altitude, atmos_consts.pressure, kind='cubic')
             t_bottom = f(simconfig.domain_start[1])
             t_top = f(simconfig.domain_end[1])
-            simconfig.boundary_conditions_t = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                                [libfd.BoundaryDirichlet(t_bottom), libfd.BoundaryDirichlet(t_top)],
+            simconfig.boundary_conditions_t = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                                [libpdefd.BoundaryDirichlet(t_bottom), libpdefd.BoundaryDirichlet(t_top)],
                                             ]
     
-            simconfig.boundary_conditions_rho_t = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                                [libfd.BoundaryDirichlet(rho_bottom*t_bottom), libfd.BoundaryDirichlet(rho_top*t_top)],
+            simconfig.boundary_conditions_rho_t = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                                [libpdefd.BoundaryDirichlet(rho_bottom*t_bottom), libpdefd.BoundaryDirichlet(rho_top*t_top)],
                                             ]
             
         elif 0:
@@ -99,40 +101,40 @@ class Benchmarks:
             4th order Neumann BC seem to work extremely well
             """
             order_neumann = 4
-            simconfig.boundary_conditions_rho = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                                [libfd.BoundaryNeumannExtrapolated(0, order_neumann), libfd.BoundaryNeumannExtrapolated(0, order_neumann)],
+            simconfig.boundary_conditions_rho = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                                [libpdefd.BoundaryNeumannExtrapolated(0, order_neumann), libpdefd.BoundaryNeumannExtrapolated(0, order_neumann)],
                                             ]
             
-            simconfig.boundary_conditions_p = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                                [libfd.BoundaryNeumannExtrapolated(0, order_neumann), libfd.BoundaryNeumannExtrapolated(0, order_neumann)],
+            simconfig.boundary_conditions_p = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                                [libpdefd.BoundaryNeumannExtrapolated(0, order_neumann), libpdefd.BoundaryNeumannExtrapolated(0, order_neumann)],
                                             ]
             
-            simconfig.boundary_conditions_t = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                                [libfd.BoundaryNeumannExtrapolated(0, order_neumann), libfd.BoundaryNeumannExtrapolated(0, order_neumann)],
+            simconfig.boundary_conditions_t = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                                [libpdefd.BoundaryNeumannExtrapolated(0, order_neumann), libpdefd.BoundaryNeumannExtrapolated(0, order_neumann)],
                                             ]
     
-            simconfig.boundary_conditions_rho_t = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                                [libfd.BoundaryNeumannExtrapolated(0, order_neumann), libfd.BoundaryNeumannExtrapolated(0, order_neumann)],
+            simconfig.boundary_conditions_rho_t = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                                [libpdefd.BoundaryNeumannExtrapolated(0, order_neumann), libpdefd.BoundaryNeumannExtrapolated(0, order_neumann)],
                                             ]
 
         else:
             """
             Use symmetric boundary conditions
             """
-            simconfig.boundary_conditions_rho = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                                [libfd.BoundarySymmetric(), libfd.BoundarySymmetric()],
+            simconfig.boundary_conditions_rho = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                                [libpdefd.BoundarySymmetric(), libpdefd.BoundarySymmetric()],
                                             ]
             
-            simconfig.boundary_conditions_p = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                                [libfd.BoundarySymmetric(), libfd.BoundarySymmetric()],
+            simconfig.boundary_conditions_p = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                                [libpdefd.BoundarySymmetric(), libpdefd.BoundarySymmetric()],
                                             ]
             
-            simconfig.boundary_conditions_t = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                                [libfd.BoundarySymmetric(), libfd.BoundarySymmetric()],
+            simconfig.boundary_conditions_t = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                                [libpdefd.BoundarySymmetric(), libpdefd.BoundarySymmetric()],
                                             ]
     
-            simconfig.boundary_conditions_rho_t = [ [libfd.BoundaryPeriodic() for _ in range(2)],
-                                                [libfd.BoundarySymmetric(), libfd.BoundarySymmetric()],
+            simconfig.boundary_conditions_rho_t = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
+                                                [libpdefd.BoundarySymmetric(), libpdefd.BoundarySymmetric()],
                                             ]
             
             
@@ -141,6 +143,10 @@ class Benchmarks:
         self,
         simconfig
     ):
+        if simconfig.benchmark_name == None:
+            print("Please specify benchmark to use!")
+            sys.exit(1)
+        
         if simconfig.benchmark_name in ["horizontal_bump"]:
             simconfig.const_g = 0
             simconfig.domain_end = np.array([10e3, 10e3])
@@ -213,8 +219,8 @@ class Benchmarks:
             """
             Boundary conditions
             """
-            dirichlet0 = libfd.BoundaryDirichlet(0)
-            symmetric = libfd.BoundarySymmetric()
+            dirichlet0 = libpdefd.BoundaryDirichlet(0)
+            symmetric = libpdefd.BoundarySymmetric()
     
             """
             Zero velocities at top and bottom boundaries
@@ -241,6 +247,7 @@ class Benchmarks:
             """
             simconfig.domain_start = np.array([0., 0.])
             simconfig.domain_end = np.array([10e3, 10e3])
+            simconfig.domain_end = np.array([20e3, 10e3])
             
             self.setup_simconfig_bc_vertical_periodic_dirichlet(simconfig)
            
@@ -261,10 +268,9 @@ class Benchmarks:
             simconfig.domain_end = np.array([1e3, 1e3])
             
             self.setup_simconfig_bc_vertical_periodic_dirichlet(simconfig)
-
         
         else:
-            raise Exception("Benchmark '"+simconfig.benchmark_name+"' not supported")
+            raise Exception("Benchmark '"+str(simconfig.benchmark_name)+"' not supported")
         
         simconfig.update()
     
@@ -272,7 +278,7 @@ class Benchmarks:
     def setup_variables(
         self,
         simpde,
-        simconfig : libsimpde.SimConfig,
+        simconfig : pde_navierstokes.SimConfig,
         simmeshes,
         variable_set_prognostic,
         variable_set_prognostic_background = None
@@ -317,7 +323,7 @@ class Benchmarks:
             if center_abs == None:
                 center_abs = simconfig.initial_condition_default_center*simconfig.domain_size
             
-            return libfd_tools.gaussian_bump(
+            return libpdefd.tools.gaussian_bump(
                         p_mesh_data,
                         ic_center = center_abs,
                         domain_size = simconfig.domain_size,
@@ -383,8 +389,8 @@ class Benchmarks:
         
         if simconfig.benchmark_name in ["horizontal_steady_state", "horizontal_bump"]:
             
-            variable_set_all['p'].set(np.ones_like(p_mesh_data[:,:,0])*simconfig.sim_p_avg)
-            variable_set_all['rho'].set(np.ones_like(rho_mesh_data[:,:,0])*simconfig.sim_rho_avg)
+            variable_set_all['p'].set(np.ones_like(p_mesh_data[:,:,0])*simconfig.const_p0)
+            variable_set_all['rho'].set(np.ones_like(rho_mesh_data[:,:,0])*simconfig.const_rho0)
             variable_set_all['t'].set(fun_t_from_p_rho(t_mesh_data, variable_set_all['p'], variable_set_all['rho']))
             
             if variable_set_prognostic_background != None:
@@ -393,8 +399,8 @@ class Benchmarks:
             
             if simconfig.benchmark_name in ["horizontal_bump"]:
                             
-                variable_set_all['p'] += fun_gaussian_bump(p_mesh_data)*simconfig.sim_p_avg*sim_p_scaling
-                variable_set_all['rho'] += fun_gaussian_bump(rho_mesh_data)*simconfig.sim_rho_avg*sim_rho_scaling
+                variable_set_all['p'] += fun_gaussian_bump(p_mesh_data)*simconfig.const_p0*sim_p_scaling
+                variable_set_all['rho'] += fun_gaussian_bump(rho_mesh_data)*simconfig.const_rho0*sim_rho_scaling
 
                 variable_set_all['t'].set(fun_t_from_p_rho(t_mesh_data, variable_set_all['p'], variable_set_all['rho']))
                 

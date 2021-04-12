@@ -6,9 +6,6 @@ import numpy as np
 import libpdefd
 import libpdefd.pdes.navierstokes as pde_navierstokes
 import libpdefd.pdes.navierstokes_benchmarks as pde_navierstokes_benchmarks
-#import libtide.libfd.libnsec_benchmarks as libsimpde_benchmarks
-#import libtide.libfd.libfd as libfd
-#import libtide.libfd.libpdefd.tools as libpdefd.tools
 
 
 """
@@ -53,7 +50,7 @@ else:
 Generate grid information
 """
 print("Setup GridInfoNDSet")
-simgridinfo = simpde.getGridInfoNDSet()
+simgridinfondset = simpde.getGridInfoNDSet()
 
 """
 Generate mesh
@@ -105,9 +102,7 @@ plot_generate = simconfig.output_plot_filename != "" or simconfig.output_pickle_
 
 
 if plot_generate:
-    import libtide.libfd.libfd_vis as libfd_vis
-    
-    vis = libfd_vis.Visualization2DMesh(
+    vis = libpdefd.vis.Visualization2DMesh(
         vis_dim_x = simconfig.vis_dim_x,
         vis_dim_y = simconfig.vis_dim_y,
         vis_slice = simconfig.vis_slice,
@@ -119,51 +114,25 @@ if plot_generate:
         
         if variable_name in ['u', 'w', 'rho', 't', 'p']:
             var = simpde.get_var(U, variable_name)
-            vargridinfo = simgridinfo[variable_name]
+            vargridinfo = simgridinfondset[variable_name]
         
         elif variable_name == "p_diff":
             var = simpde.get_var(U, "p") - p_t0
-            vargridinfo = simgridinfo["p"]
+            vargridinfo = simgridinfondset["p"]
         
         elif variable_name == "rho_diff":
             var = simpde.get_var(U, "rho") - rho_t0
-            vargridinfo = simgridinfo["rho"]
+            vargridinfo = simgridinfondset["rho"]
         
         elif variable_name == "t_diff":
             var = simpde.get_var(U, "t") - t_t0
-            vargridinfo = simgridinfo["t"]
+            vargridinfo = simgridinfondset["t"]
             
         else:
             raise Exception("variable_name "+str(variable_name)+" not supported")
         
         return var.data, vargridinfo
-    
-    """
-    def plot_update_data(vis_variable = None):
 
-        if vis_variable in ['u', 'w', 'rho', 't', 'p']:
-            vis_var = simpde.get_var(U, vis_variable)
-            vis_simgridinfo = simgridinfo[vis_variable]
-        
-        elif vis_variable == "p_diff":
-            vis_var = simpde.get_var(U, "p") - p_t0
-            vis_simgridinfo = simgridinfo["p"]
-        
-        elif vis_variable == "rho_diff":
-            vis_var = simpde.get_var(U, "rho") - rho_t0
-            vis_simgridinfo = simgridinfo["rho"]
-        
-        elif vis_variable == "t_diff":
-            vis_var = simpde.get_var(U, "t") - t_t0
-            vis_simgridinfo = simgridinfo["t"]
-            
-        else:
-            raise Exception("vis_variable "+str(vis_variable)+" not supported")
-        
-        return vis_simgridinfo, vis_var
-        vis.update_plots(vis_simgridinfo, vis_var)
-    """
-    
     
     def plot_update_title(i, vis_variable = None, title_prefix=""):
         if vis_variable == None:
@@ -178,7 +147,7 @@ if plot_generate:
     
     def do_gui_plots(num_timestep, gui_block = True):
         
-        var, simgridinfo = plot_get_data(simconfig.variable_name)
+        var, simgridinfo = plot_get_data(simconfig.vis_variable)
         vis.update_plots(simgridinfo, var)
         
         plot_update_title(num_timestep)
@@ -237,7 +206,7 @@ if plot_generate:
     
     
     if simconfig.gui:
-        var, simgridinfo = plot_get_data(simconfig.variable_name)
+        var, simgridinfo = plot_get_data(simconfig.vis_variable)
         vis.update_plots(simgridinfo, var)
         plot_update_title(0)
     

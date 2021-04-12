@@ -3,8 +3,8 @@
 import sys
 import numpy as np
 import libpdefd
-#import libtide.libpdefd.libpdefd as libpdefd
-#import libtide.libpdefd.libpdefd_tools as libpdefd_tools
+#import libpdefd.libpdefd.libpdefd as libpdefd
+#import libpdefd.libpdefd.libpdefd_tools as libpdefd_tools
 
 
 """
@@ -344,7 +344,7 @@ if output_freq != None:
     
     import matplotlib.pyplot as plt
     
-    import libtide.plot_config as pc
+    import libpdefd.plot_config as pc
     fig, ax = pc.setup()
 
     ps = pc.PlotStyles()

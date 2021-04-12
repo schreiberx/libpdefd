@@ -4,9 +4,7 @@ import sys
 import pickle
 import argparse
 
-import libtide.libfd.libfd as libfd
-import libtide.libfd.libfd_tools as libfd_tools
-import libtide.libfd.libfd_vis as libfd_vis
+import libpdefd
 
 
 
@@ -57,14 +55,14 @@ with open(args.filename, 'rb') as file:
         title += ", t="+str(round(i*pickle_data['state_dt'], 3))+" sec"
         vis.set_title(title)
 
-    vis = libfd_vis.Visualization2DMesh(
+    vis = libpdefd.vis.Visualization2DMesh(
         vis_dim_x = pickle_data['simconfig'].vis_dim_x,
         vis_dim_y = pickle_data['simconfig'].vis_dim_y,
         vis_slice = pickle_data['simconfig'].vis_slice,
         rescale = 1.0
     )
 
-    vis.update_plots(pickle_data['var_gridinfo'], pickle_data['var_data'].transpose())
+    vis.update_plots(pickle_data['var_gridinfo'], pickle_data['var_data'])
     
     plot_update_title(pickle_data['state_num_timestep'], pickle_data['var_name'])
 

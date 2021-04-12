@@ -229,7 +229,7 @@ if output_freq != None:
     
     import matplotlib.pyplot as plt
     
-    import libtide.plot_config as pc
+    import libpdefd.plot_config as pc
     fig, ax = pc.setup()
 
     ps = pc.PlotStyles()

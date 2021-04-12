@@ -21,7 +21,7 @@ pip3 install -U $PIP_PACKAGES  || exit 1
 
 
 #
-# Setup libtide module
+# Setup module
 #
 
 P=$(pwd)
