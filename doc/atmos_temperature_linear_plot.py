@@ -1,4 +1,4 @@
-import libtide.plot_config as pc
+import libpdefd.plot_config as pc
 import atmos_consts as ac
 import matplotlib.pyplot as plt
 

@@ -3,7 +3,7 @@ import scipy as sp
 import scipy.sparse as sparse
 import itertools
 import sys
-import libtide.libfd.libfd as libfd
+import libpdefd
 import argparse
 
 
@@ -333,32 +333,32 @@ for (boundary_src, boundary_dst, boundary_src_right, boundary_dst_right) in iter
             def get_bc(boundary_type, boundary_type_right, test_fun):
                 
                 if boundary_type == "periodic":
-                    boundary_left = libfd.BoundaryPeriodic()
+                    boundary_left = libpdefd.BoundaryPeriodic()
                 
                 elif boundary_type == "dirichlet":
-                    boundary_left = libfd.BoundaryDirichlet(test_fun(domain_start, 0))
+                    boundary_left = libpdefd.BoundaryDirichlet(test_fun(domain_start, 0))
                 
                 elif boundary_type == "neumann_extrapolated":
-                    boundary_left = libfd.BoundaryNeumannExtrapolated(test_fun(domain_start, diff_order=neumann_diff_order), diff_order=neumann_diff_order)
+                    boundary_left = libpdefd.BoundaryNeumannExtrapolated(test_fun(domain_start, diff_order=neumann_diff_order), diff_order=neumann_diff_order)
                     
                 elif boundary_type == "symmetric":
-                    boundary_left = libfd.BoundarySymmetric()
+                    boundary_left = libpdefd.BoundarySymmetric()
                     
                 else:
                     raise Exception("Boundary type '"+boundary_type+"' not supported")
 
 
                 if boundary_type_right == "periodic":
-                    boundary_right = libfd.BoundaryPeriodic()
+                    boundary_right = libpdefd.BoundaryPeriodic()
                 
                 elif boundary_type_right == "dirichlet":
-                    boundary_right = libfd.BoundaryDirichlet(test_fun(domain_end, 0))
+                    boundary_right = libpdefd.BoundaryDirichlet(test_fun(domain_end, 0))
                 
                 elif boundary_type_right == "neumann_extrapolated":
-                    boundary_right = libfd.BoundaryNeumannExtrapolated(test_fun(domain_end, diff_order=neumann_diff_order), diff_order=neumann_diff_order)
+                    boundary_right = libpdefd.BoundaryNeumannExtrapolated(test_fun(domain_end, diff_order=neumann_diff_order), diff_order=neumann_diff_order)
                     
                 elif boundary_type_right == "symmetric":
-                    boundary_right = libfd.BoundarySymmetric()
+                    boundary_right = libpdefd.BoundarySymmetric()
                     
                 else:
                     raise Exception("Boundary type right '"+boundary_type_right+"' not supported")
@@ -377,7 +377,7 @@ for (boundary_src, boundary_dst, boundary_src_right, boundary_dst_right) in iter
         
                 
                 def get_grid(grid_type, staggered, name, boundaries):
-                    grid = libfd.GridInfo1D(name=name)
+                    grid = libpdefd.GridInfo1D(name=name)
                     
                     if grid_type == "auto":
                         grid.setup_autogrid(
@@ -391,7 +391,7 @@ for (boundary_src, boundary_dst, boundary_src_right, boundary_dst_right) in iter
                     elif grid_type == "homemade_equidistant":
                         
                         if staggered:
-                            if isinstance(boundaries[0], libfd.BoundaryPeriodic):
+                            if isinstance(boundaries[0], libpdefd.BoundaryPeriodic):
                                 x = np.linspace(0, 1, N, endpoint=True) + 0.5/(N-1)
                                 x *= domain_size
                                 x += domain_start
@@ -475,7 +475,7 @@ for (boundary_src, boundary_dst, boundary_src_right, boundary_dst_right) in iter
                 """
                 Generate differential operator
                 """
-                u_diff = libfd.OperatorDiff1D(
+                u_diff = libpdefd.OperatorDiff1D(
                     diff_order = diff_order,        # Order of differentiation
                     min_approx_order = min_approx_order,    # Approximation order
                     src_grid=src_grid,      # Source variable to compute differential on
@@ -498,7 +498,7 @@ for (boundary_src, boundary_dst, boundary_src_right, boundary_dst_right) in iter
                     
                 if plot_stencil != None:
                     import matplotlib.pyplot as plt
-                    import libtide.plot_config as pc
+                    import libpdefd.plot_config as pc
                     
                     fig, ax = pc.setup(figsize=(10, 6))
                     
@@ -617,7 +617,7 @@ for (boundary_src, boundary_dst, boundary_src_right, boundary_dst_right) in iter
                 
                 if plot_solution:
                     import matplotlib.pyplot as plt
-                    import libtide.plot_config as pc
+                    import libpdefd.plot_config as pc
                     
                     fig, ax = pc.setup(scale=1.5)
                     

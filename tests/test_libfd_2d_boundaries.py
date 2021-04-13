@@ -2,8 +2,7 @@
 
 import sys
 import numpy as np
-import libtide.libfd.libfd_tools
-import libtide.libfd.libfd as libfd
+import libpdefd
 
 
 
@@ -33,11 +32,11 @@ for num_dims in [2,3,4]:
         ):
             for i in range(num_dims):    
                 if boundary_condition == "dirichlet":
-                    boundary_left = libfd.BoundaryDirichlet(sim_var_avg)
-                    boundary_right = libfd.BoundaryDirichlet(sim_var_avg)
+                    boundary_left = libpdefd.BoundaryDirichlet(sim_var_avg)
+                    boundary_right = libpdefd.BoundaryDirichlet(sim_var_avg)
                 elif boundary_condition == "neumann":
-                    boundary_left = libfd.BoundaryNeumann()
-                    boundary_right = libfd.BoundaryNeumann()
+                    boundary_left = libpdefd.BoundaryNeumann()
+                    boundary_right = libpdefd.BoundaryNeumann()
                 
                 boundaries = [boundary_left, boundary_right]
             
@@ -48,20 +47,20 @@ for num_dims in [2,3,4]:
         """
         Grid for rho, v0, v1, p, T
         """
-        grid_nd_ = [libfd.GridInfo1D("p_d"+str(i), dim=i) for i in range(num_dims)]
+        grid_nd_ = [libpdefd.GridInfo1D("p_d"+str(i), dim=i) for i in range(num_dims)]
         staggered_dim = -1
         
         for i in range(num_dims):    
-            boundary_left = libfd.BoundaryDirichlet(sim_var_avg)
-            boundary_right = libfd.BoundaryDirichlet(sim_var_avg)
+            boundary_left = libpdefd.BoundaryDirichlet(sim_var_avg)
+            boundary_right = libpdefd.BoundaryDirichlet(sim_var_avg)
             boundaries = [boundary_left, boundary_right]
         
             staggered = (i==staggered_dim)
             grid_nd_[i].setup_autogrid(domain_start[i], domain_end[i], cell_res[i]+1, boundaries=boundaries, staggered=staggered)
         
-        rho_grid = libfd.GridInfoND(grid_nd_, name="rho")
+        rho_grid = libpdefd.GridInfoND(grid_nd_, name="rho")
         
-        grad = [ libfd.OperatorDiffND(
+        grad = [ libpdefd.OperatorDiffND(
                         diff_dim = i,
                         diff_order = 1,
                         min_approx_order = min_spatial_approx_order,
@@ -69,7 +68,7 @@ for num_dims in [2,3,4]:
                         dst_grid = rho_grid,
                     ) for i in range(num_dims)]
         
-        var = libfd.VariableND(rho_grid)
+        var = libpdefd.VariableND(rho_grid)
         var += sim_var_avg
         
         for dim in range(num_dims):
