@@ -139,7 +139,7 @@ class MatrixSparseCompute:
             k = sparse.kron(self._matrix_csr, data._matrix_csr)
             k = sparse.csr_matrix(k)
             return MatrixSparseCompute(k)
-    
+        
         raise Exception("Unsupported type data '"+str(type(data))+"'")
     
     
@@ -158,19 +158,6 @@ class MatrixSparseCompute:
             return MatrixSparseCompute(d)
         
         raise Exception("Unsupported type data '"+str(type(data))+"'")
-
-
-def to_sparse_matrix_for_compute(data, *args, **kwargs):
-    """
-    Convert
-    """
-    
-    return MatrixSparseCompute(data, *args, **kwargs)
-
-    if isinstance(data, MatrixSparseSetup):
-        return sparse.csr_matrix(data._matrix_lil, *args, **kwargs)
-
-    return sparse.csr_matrix(data, *args, **kwargs)
 
 
 def eye(shape):
