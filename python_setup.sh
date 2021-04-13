@@ -15,7 +15,8 @@ source "$VENV_DIR/bin/activate" || exit 1
 pip3 install -U pip
 
 
-PIP_PACKAGES="matplotlib==3.3.4 numpy==1.20.2 scipy==1.6.2 sympy==1.8"
+#PIP_PACKAGES="matplotlib==3.3.4 numpy==1.20.2 scipy==1.6.2 sympy==1.8"
+PIP_PACKAGES="matplotlib==3.3.4 numpy scipy sympy==1.8"
 echo "Installing PIP packages: $PIP_PACKAGES"
 pip3 install -U $PIP_PACKAGES  || exit 1
 
