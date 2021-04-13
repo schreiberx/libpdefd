@@ -3,15 +3,9 @@ import scipy as sp
 import scipy.sparse as sparse
 import sys
 
+import libpdefd.libpdefd_matrix as libpdefd_matrix
 import libpdefd.fd_weights_explicit as fdwe
 
-
-
-def _convert_to_efficient_matrix_format(a):
-    return sparse.csr_matrix(a)
-
-def _efficient_matrix_storage(*args, **kwargs):
-    return sparse.csr_matrix(*args, **kwargs)
 
 
 class _VariableBase:
@@ -1848,7 +1842,8 @@ class OperatorDiff1D(_OperatorBase):
         Note, that all src grid points are included here and that boundary conditions are coped with later on.
         This makes it more flexible.
         """
-        L_sparse_tmp = sparse.lil_matrix((dst_grid.num_dofs, src_grid.num_stencil_grid_points))
+        L_sparse_tmp = libpdefd_matrix.get_sparse_matrix_for_setup((dst_grid.num_dofs, src_grid.num_stencil_grid_points))
+        
         
         """
         Iterate over all points on destination field.
@@ -1886,6 +1881,7 @@ class OperatorDiff1D(_OperatorBase):
             """
             for i in range(len(src_range)):
                 L_sparse_tmp[dst_idx, src_range[i]] += stencil[i]
+            
             
             if 0:
                 print("*"*80)
@@ -1937,7 +1933,6 @@ class OperatorDiff1D(_OperatorBase):
             print(self.c)
             print(src_grid.boundaries[0].dirichlet_value)
             print("*"*80)
-        
 
         """
         Postprocessing of boundaries
@@ -1958,7 +1953,6 @@ class OperatorDiff1D(_OperatorBase):
                 col = L_sparse_tmp[:,0].toarray()[:,0]
                 self.c += col*src_grid.boundaries[0].dirichlet_value
                 L_sparse_tmp = L_sparse_tmp[:,1:]
-                
             
             elif src_grid.boundaries[0].type == "neumann_extrapolated":
                 
@@ -2059,7 +2053,7 @@ class OperatorDiff1D(_OperatorBase):
             else:
                 raise Exception("Boundary condition '"+src_grid.boundaries[1].type+"' not supported")
         
-        self.L_sparse = _convert_to_efficient_matrix_format(L_sparse_tmp)
+        self.L_sparse = libpdefd_matrix.to_sparse_matrix_for_compute(L_sparse_tmp)
         
         
         """
@@ -2093,8 +2087,8 @@ class OperatorDiff1D(_OperatorBase):
             print(self.c)
         
         # Estimate possible cancellation errors
-        self.L_sparse_min = np.min(self.L_sparse)
-        self.L_sparse_max = np.max(self.L_sparse)
+        self.L_sparse_min = self.L_sparse.min()
+        self.L_sparse_max = self.L_sparse.max()
         self.L_sparse_cancellation_error = self.L_sparse_max - self.L_sparse_min
         
         if 0:
@@ -2160,20 +2154,26 @@ class OperatorDiffND(_OperatorBase):
         num_dims = len(dst_grid)
         
         def get_bcast_matrix_L(L, i_dim):
+            
+            
             """
             Generate matrix with the linear operator 'L' in it
             """
-            retm = _convert_to_efficient_matrix_format(np.array([1]))
+            retm = libpdefd_matrix.to_sparse_matrix_for_compute(np.array([1]))
             
             for i in range(0, i_dim):
-                M = sparse.eye(dst_grid.shape[i])
-                retm = sparse.kron(retm, M)
+                M = libpdefd_matrix.eye(dst_grid.shape[i])
+                #retm = sparse.kron(retm, M)
+                retm = retm.kron(M)
                 
-            retm = sparse.kron(retm, L)
+            
+            #retm = sparse.kron(retm, L)
+            retm = retm.kron(L)
             
             for i in range(i_dim+1, num_dims):
-                M = sparse.eye(src_grid.shape[i])
-                retm = sparse.kron(retm, M)
+                M = libpdefd_matrix.eye(src_grid.shape[i])
+                #retm = sparse.kron(retm, M)
+                retm = retm.kron(M)
 
             return retm
         
