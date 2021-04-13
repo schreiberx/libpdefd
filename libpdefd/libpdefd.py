@@ -1842,7 +1842,7 @@ class OperatorDiff1D(_OperatorBase):
         Note, that all src grid points are included here and that boundary conditions are coped with later on.
         This makes it more flexible.
         """
-        L_sparse_tmp = libpdefd_matrix.get_sparse_matrix_for_setup((dst_grid.num_dofs, src_grid.num_stencil_grid_points))
+        L_sparse_tmp = libpdefd_matrix.MatrixSparseSetup((dst_grid.num_dofs, src_grid.num_stencil_grid_points))
         
         
         """
@@ -2053,7 +2053,7 @@ class OperatorDiff1D(_OperatorBase):
             else:
                 raise Exception("Boundary condition '"+src_grid.boundaries[1].type+"' not supported")
         
-        self.L_sparse = libpdefd_matrix.to_sparse_matrix_for_compute(L_sparse_tmp)
+        self.L_sparse = libpdefd_matrix.MatrixSparseCompute(L_sparse_tmp)
         
         
         """
@@ -2159,7 +2159,7 @@ class OperatorDiffND(_OperatorBase):
             """
             Generate matrix with the linear operator 'L' in it
             """
-            retm = libpdefd_matrix.to_sparse_matrix_for_compute(np.array([1]))
+            retm = libpdefd_matrix.MatrixSparseCompute(np.array([1]))
             
             for i in range(0, i_dim):
                 M = libpdefd_matrix.eye(dst_grid.shape[i])

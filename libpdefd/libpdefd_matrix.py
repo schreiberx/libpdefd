@@ -6,9 +6,24 @@ import scipy.sparse as sparse
 
 
 class MatrixSparseSetup:
+    """
+    This matrix should be used during setup.
+    It's not necessary to optimize the access to this matrix
+    """
     def __init__(self, *args, **kwargs):
         self.setup(*args, **kwargs)
     
+    def setup(
+            self,
+            shape = None,
+            dtype = None
+    ):
+        if shape == None:
+            return
+        
+        self._matrix_lil = sparse.lil_matrix(shape, dtype = dtype)
+    
+
     def __getitem__(self, key):
         if isinstance(key, tuple):
             return self._matrix_lil[key]
@@ -59,29 +74,11 @@ class MatrixSparseSetup:
         return np.max(self._matrix_lil)
     
     
-    def setup(
-            self,
-            shape = None,
-            dtype = None
-    ):
-        if shape == None:
-            return
-        
-        self._matrix_lil = sparse.lil_matrix(shape, dtype = dtype)
-    
-
-
-
-def get_sparse_matrix_for_setup(
-        shape,
-        dtype = None
-):
-    #return MatrixSparseSetup(shape, dtype = dtype)
-    return sparse.lil_matrix(shape, dtype = dtype)
-
-
 
 class MatrixSparseCompute:
+    """
+    Return a matrix format which is suited for the computational part
+    """
     def __init__(self, *args, **kwargs):
         self.setup(*args, **kwargs)
     
@@ -107,7 +104,7 @@ class MatrixSparseCompute:
             self.shape = self._matrix_csr.shape
             return
         
-        if isinstance(data, MatrixSparseSetup):
+        if isinstance(data, MatrixSparseCompute):
             self._matrix_csr = data._matrix_csr
             self.shape = self._matrix_csr.shape
             return
@@ -148,10 +145,6 @@ class MatrixSparseCompute:
     
     def dot(self, data):
         
-        if isinstance(data, MatrixSparseCompute):
-            d = self._matrix_csr.dot(data._matrix_csr)
-            return MatrixSparseCompute(d)
-        
         if isinstance(data, np.ndarray):
             """
             If input is an ndarray, return also an ndarray
@@ -160,10 +153,17 @@ class MatrixSparseCompute:
             assert isinstance(d, np.ndarray)
             return d
 
+        if isinstance(data, MatrixSparseCompute):
+            d = self._matrix_csr.dot(data._matrix_csr)
+            return MatrixSparseCompute(d)
+        
         raise Exception("Unsupported type data '"+str(type(data))+"'")
 
 
 def to_sparse_matrix_for_compute(data, *args, **kwargs):
+    """
+    Convert
+    """
     
     return MatrixSparseCompute(data, *args, **kwargs)
 
