@@ -1,6 +1,4 @@
 import numpy as np
-import scipy as sp
-import scipy.sparse as sparse
 import sys
 
 import libpdefd.libpdefd_matrix as libpdefd_matrix
@@ -2234,7 +2232,7 @@ class OperatorDiffND(_OperatorBase):
                         print(dst_grid)
                         print(src_grid)
                         raise Exception("Grid in dimension "+str(dim)+" doesn't match, please check")
-                
+                    
                     # abs is natively supported, but max isn't
                     err = abs(diff_op.L_sparse - sparse.eye(np.product(dst_grid[dim].num_dofs))).max()
                     if err > 1e-10*(abs(diff_op.L_sparse).max()):
