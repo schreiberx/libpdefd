@@ -72,14 +72,10 @@ benchmark.setup_variables(simpde, simconfig, simmeshes, variable_set, variable_s
 
 U = variable_set
 
-if 0:
-    p_t0 = simpde.get_var(U, "p")
-    rho_t0 = simpde.get_var(U, "rho")
-    t_t0 = simpde.get_var(U, "t")
-else:
-    p_t0 = simpde.get_var(variable_set_background, "p")
-    rho_t0 = simpde.get_var(variable_set_background, "rho")
-    t_t0 = simpde.get_var(variable_set_background, "t")
+p_t0 = simpde.get_var(variable_set_background, "p")
+rho_t0 = simpde.get_var(variable_set_background, "rho")
+t_t0 = simpde.get_var(variable_set_background, "t")
+pot_t_t0 = simpde.get_var(variable_set_background, "pot_t")
 
 
 """
@@ -109,10 +105,21 @@ if plot_generate:
         rescale = 1.0
     )
     
+    vis_contours = None
+    
+    
+    if simconfig.plot_contour_info is not None:
+        
+        vis_contours = np.arange(simconfig.plot_contour_info[0], simconfig.plot_contour_info[1], simconfig.plot_contour_info[2])
+        
+        # Remove contour around 0
+        vis_contours = np.delete(vis_contours, np.where(np.isclose(vis_contours, 0)))
+        
+        print("Visualization contours: "+str(vis_contours))
     
     def plot_get_data(variable_name):
         
-        if variable_name in ['u', 'w', 'rho', 't', 'p']:
+        if variable_name in ['u', 'w', 'rho', 't', 'p', 'pot_t']:
             var = simpde.get_var(U, variable_name)
             vargridinfo = simgridinfondset[variable_name]
         
@@ -127,6 +134,10 @@ if plot_generate:
         elif variable_name == "t_diff":
             var = simpde.get_var(U, "t") - t_t0
             vargridinfo = simgridinfondset["t"]
+        
+        elif variable_name == "pot_t_diff":
+            var = simpde.get_var(U, "pot_t") - pot_t_t0
+            vargridinfo = simgridinfondset["pot_t"]
             
         else:
             raise Exception("variable_name "+str(variable_name)+" not supported")
@@ -148,7 +159,7 @@ if plot_generate:
     def do_gui_plots(num_timestep, gui_block = True):
         
         var, simgridinfo = plot_get_data(simconfig.vis_variable)
-        vis.update_plots(simgridinfo, var)
+        vis.update_plots(simgridinfo, var, vis_contours)
         
         plot_update_title(num_timestep)
         vis.show(block=gui_block)
@@ -163,7 +174,7 @@ if plot_generate:
             simtime_str = get_simtime_str(simtime)
             
             var_data, simgridinfo = plot_get_data(varname)
-            vis.update_plots(simgridinfo, var_data)
+            vis.update_plots(simgridinfo, var_data, vis_contours)
             
             plot_update_title(num_timestep, varname, title_prefix=simconfig.ns_type+"\n")
             
@@ -176,12 +187,11 @@ if plot_generate:
     
     
     def do_file_pickle(num_timestep, simtime):
-        for var_name in ['u', 'w', 'p', 'rho', 't', 'p_diff', 'rho_diff', 't_diff']:
+        for var_name in ['u', 'w', 'p', 'rho', 't', 'p_diff', 'rho_diff', 't_diff', 'pot_t', 'pot_t_diff']:
             
             simtime_str = get_simtime_str(simtime)
             
             var_data, var_gridinfo = plot_get_data(var_name)
-            vis.update_plots(var_gridinfo, var)
             
             pickle_data = {
                 'var_name': var_name,
@@ -206,8 +216,8 @@ if plot_generate:
     
     
     if simconfig.gui:
-        var, simgridinfo = plot_get_data(simconfig.vis_variable)
-        vis.update_plots(simgridinfo, var)
+        var_data, simgridinfo = plot_get_data(simconfig.vis_variable)
+        vis.update_plots(simgridinfo, var_data, vis_contours)
         plot_update_title(0)
     
         vis.show(block=False)

@@ -132,20 +132,12 @@ class SimConfig:
         parser.add_argument('--cell-res', '-X', dest="cell_res", nargs="+", type=int, help="Resolution in each dimension (values separated by space)")
         
         
+        
         """
         Center of initial condition (relative to domain)
         """
         self.initial_condition_default_center = [0.25 for _ in range(2)]
         parser.add_argument('--initial-condition-default-center', dest="initial_condition_default_center", nargs="+", type=float, help="Center of initial condition (values separated by space)")
-        
-        
-        """
-        Visualization dimensions for 2D plots
-        """
-        self.vis_dim_x = 0
-        self.vis_dim_y = 1
-        parser.add_argument('--vis-dim-x', dest="vis_dim_x", type=int, help="Dimension to visualize along x axis")
-        parser.add_argument('--vis-dim-y', dest="vis_dim_y", type=int, help="Dimension to visualize along y axis")
         
         
         """
@@ -187,6 +179,21 @@ class SimConfig:
         """
         self.gui = False
         parser.add_argument('--gui', '-g', dest="gui", type=str2bool, help="Activate GUI")
+        
+        """
+        Visualization dimensions for 2D plots
+        """
+        self.vis_dim_x = 0
+        self.vis_dim_y = 1
+        parser.add_argument('--vis-dim-x', dest="vis_dim_x", type=int, help="Dimension to visualize along x axis")
+        parser.add_argument('--vis-dim-y', dest="vis_dim_y", type=int, help="Dimension to visualize along y axis")
+        
+        
+        """
+        Contour information for plots
+        """
+        self.plot_contour_info = None
+        parser.add_argument('--plot-contour-info', dest="plot_contour_info", nargs="+", type=int, help="Plot contour info (3 parameters used for numpy.arange()")
         
         """
         Time to sleep between time steps in seconds
@@ -352,7 +359,9 @@ class SimConfig:
         print(" + boundary_conditions_rho_u: "+str([[str(i) for i in k] for k in self.boundary_conditions_rho_u]))
         print(" + boundary_conditions_rho_w: "+str([[str(i) for i in k] for k in self.boundary_conditions_rho_w]))
         print(" + boundary_conditions_rho_t: "+str([[str(i) for i in k] for k in self.boundary_conditions_rho_t]))
+        print(" + timestep_sleep: "+str(self.timestep_sleep))
         print(" + grid_setup: "+str(self.grid_setup))
+        print(" + plot_contour_info: "+str(self.plot_contour_info))
         print(" + output_text_freq: "+str(self.output_text_freq))
         print(" + gui: "+str(self.gui))
         print(" + output_plot_timesteps_interval: "+str(self.output_plot_timesteps_interval))
@@ -374,59 +383,6 @@ class SimPDE_Base:
     def __init__(self, simconfig):
         self.simconfig = simconfig
     
-    """
-    Setup boundaries
-    """
-    def get_boundaries(self, boundary_condition, dim_id, variable_id):
-        
-        if boundary_condition == "periodic":
-            boundary_left = libpdefd.BoundaryPeriodic()
-            boundary_right = libpdefd.BoundaryPeriodic()
-        
-        elif boundary_condition == "dirichlet":
-            
-            if variable_id == "rho" and dim_id == 1:
-                boundary_left = libpdefd.BoundaryDirichlet(self.simconfig.sim_rho0)
-                boundary_right = libpdefd.BoundaryDirichlet(self.simconfig.sim_rho0)
-                
-            if variable_id == "rho_u" and dim_id == 1:
-                boundary_left = libpdefd.BoundaryDirichlet(0)
-                boundary_right = libpdefd.BoundaryDirichlet(0)
-                
-            if variable_id == "rho_v" and dim_id == 1:
-                boundary_left = libpdefd.BoundaryDirichlet(0)
-                boundary_right = libpdefd.BoundaryDirichlet(0)
-                
-            elif variable_id == "u" and dim_id == 1:
-                boundary_left = libpdefd.BoundaryDirichlet(0)
-                boundary_right = libpdefd.BoundaryDirichlet(0)
-                
-            elif variable_id == "w" and dim_id == 1:
-                boundary_left = libpdefd.BoundaryDirichlet(0)
-                boundary_right = libpdefd.BoundaryDirichlet(0)
-                
-            elif variable_id == "p" and dim_id == 1:
-                boundary_left = libpdefd.BoundaryDirichlet(self.simconfig.const_p0)
-                boundary_right = libpdefd.BoundaryDirichlet(self.simconfig.const_p0)
-                
-            elif variable_id == "t" and dim_id == 1:
-                boundary_left = libpdefd.BoundaryDirichlet(self.simconfig.sim_t0)
-                boundary_right = libpdefd.BoundaryDirichlet(self.simconfig.sim_t0)
-                
-            else:
-                boundary_left = libpdefd.BoundaryDirichlet(0)
-                boundary_right = libpdefd.BoundaryDirichlet(0)
-            
-        elif boundary_condition == "neumann":
-            boundary_left = libpdefd.BoundaryNeumann(0)
-            boundary_right = libpdefd.BoundaryNeumann(0)
-            
-        else:
-            raise Exception("Boundary condition '"+boundary_condition+"' is not supported")
-    
-        boundaries = [boundary_left, boundary_right]
-        return boundaries
-    
     
     """
     Setup grid
@@ -439,8 +395,6 @@ class SimPDE_Base:
             variable_id
     ):
         for i in range(2):
-            #boundaries = self.get_boundaries(boundary_conditions[i], i, variable_id)
-        
             """
             Setup grids for each variable
             """
@@ -530,7 +484,14 @@ class SimPDE_Base:
         self._setup_grid_info_info(rho_t_grid_info_, boundary_conditions=self.simconfig.boundary_conditions_rho_t, staggered_dim=staggered_dim_rho, variable_id="rho_t")
         self.rho_t_grid = libpdefd.GridInfoND(rho_t_grid_info_, name="rho_t")
         
-        self._grid_info_info_nd_list = [self.u_grid, self.w_grid, self.p_grid, self.rho_grid, self.t_grid]
+        """
+        Potential temperature
+        """
+        pot_t_grid_info_ = [libpdefd.GridInfo1D("pot_t_d"+str(i), dim=i) for i in range(2)]
+        self._setup_grid_info_info(pot_t_grid_info_, boundary_conditions=self.simconfig.boundary_conditions_t, staggered_dim=staggered_dim_t, variable_id="pot_t")
+        self.pot_t_grid = libpdefd.GridInfoND(pot_t_grid_info_, name="pot_t")
+        
+        self._grid_info_info_nd_list = [self.u_grid, self.w_grid, self.p_grid, self.rho_grid, self.t_grid, self.pot_t_grid]
         self.grid_info_nd_set = libpdefd.GridInfoNDSet(self._grid_info_info_nd_list)
         
         
@@ -574,7 +535,14 @@ class SimPDE_Base:
         self.beta = self.simconfig.kappa/(self.simconfig.kappa - 1.0)
         self.R = self.simconfig.const_R
         
-    
+        
+    """
+    Compute Exner pressure
+    """
+    def get_exner_from_p(self, data_p):
+        a = self.simconfig.const_R / self.simconfig.const_c_p
+        return np.power(data_p / self.simconfig.const_p0, a)
+
     
     def getGridInfoNDSet(self):
         return self.grid_info_nd_set
@@ -941,22 +909,25 @@ class SimPDE_NSNonlinearA__p_rho(SimPDE_Base):
         if varname in self.var_names_prognostic:
             idx = self.get_prog_variable_index_by_name(varname)
             return Uset[idx]
-        
+    
+        p = Uset[2]
+        rho = Uset[3]
         
         if varname == "p":
-            rho = Uset[2]
-            t = Uset[3]
-            return rho*self.R*t
+            return p
         
         elif varname == "rho":
-            p = Uset[2]
-            t = Uset[3]
-            return p / (self.R*t)
+            return rho
         
-        if varname == "t":
-            p = Uset[2]
-            rho = Uset[3]
-            return p / (rho*self.R)
+        elif varname == "t":
+            t = p / (rho*self.R)
+            return t
+        
+        elif varname == "pot_t":
+            t = p / (rho*self.R)
+            return self.get_exner_from_p(p)*t
+        
+        raise Exception("Unkown variable '"+str(varname))
 
 
 class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
@@ -1159,13 +1130,18 @@ class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
         if varname in self.var_names_prognostic:
             idx = self.get_prog_variable_index_by_name(varname)
             return Uset[idx]
-        
-        assert varname == "rho"
 
         p = Uset[2]
         t = Uset[3]
         
-        return p/(t*self.R)
+        if varname == "rho":
+            rho = p/(t*self.R)
+            return rho
+    
+        elif varname == "pot_t":
+            return self.get_exner_from_p(p)*t
+        
+        raise Exception("Unkown variable '"+str(varname))
 
 
 class SimPDE_NSNonlinearA__rho_t(SimPDE_Base):
@@ -1350,9 +1326,15 @@ class SimPDE_NSNonlinearA__rho_t(SimPDE_Base):
             idx = self.get_prog_variable_index_by_name(varname)
             return Uset[idx]
         
-        assert varname == "p"
-
         rho = Uset[2]
         t = Uset[3]
         
-        return rho*t*self.R
+        if varname == "p":
+            p = rho*t*self.R
+            return p
+    
+        elif varname == "pot_t":
+            p = rho*t*self.R
+            return self.get_exner_from_p(p)*t
+        
+        raise Exception("Unkown variable '"+str(varname))

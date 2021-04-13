@@ -131,6 +131,15 @@ class Visualization2DMesh(_VisualizationBase):
         
         self.fig, self.ax = pc.setup()
         self.ps = pc.PlotStyles()
+        
+        """
+        colormesh
+        imshow
+        """
+        self.plot_mode = "colormesh"
+        
+        self.contour = None
+        
     
     
     def get_dimreduced_data(
@@ -162,15 +171,9 @@ class Visualization2DMesh(_VisualizationBase):
         grid_info_nd : libpdefd.GridInfoND,
         variable_data
     ):
-        if 0:
-            self.maxy = np.max(np.abs(variable_data))
-            if self.maxy <= 1e-12:
-                self.maxy = 1e-12
+        if 1:
+            self.maxabsy = np.max(np.abs(variable_data))
             
-            vmin = -self.maxy*self.rescale
-            vmax = self.maxy*self.rescale
-        
-        else:
             self.maxy = np.max(variable_data)
             self.miny = np.min(variable_data)
             
@@ -188,7 +191,7 @@ class Visualization2DMesh(_VisualizationBase):
         
         num_ticks = 4
         
-        if 1:
+        if self.plot_mode == "colormesh":
             self.plotobject = plt.pcolormesh(
                 mesh_grid_coords[self.vis_dim_x],
                 mesh_grid_coords[self.vis_dim_y],
@@ -203,9 +206,9 @@ class Visualization2DMesh(_VisualizationBase):
             self.ax.set_xticks(np.linspace(mesh_grid_coords[self.vis_dim_x][0], mesh_grid_coords[self.vis_dim_x][-1], num_ticks, endpoint=True))
             self.ax.set_yticks(np.linspace(mesh_grid_coords[self.vis_dim_y][0], mesh_grid_coords[self.vis_dim_y][-1], num_ticks, endpoint=True))
         
-        else:
+        elif self.plot_mode == "imshow":
             aspect = dy/dx*variable_data.shape[1]/variable_data.shape[0]
-        
+            
             self.plotobject = plt.imshow(
                 np.flip(variable_data, axis=0),
                 vmin = vmin,
@@ -216,6 +219,10 @@ class Visualization2DMesh(_VisualizationBase):
 
             self.ax.set_xticks(np.linspace(0, variable_data.shape[1], num_ticks, endpoint=False))
             self.ax.set_yticks(np.linspace(0, variable_data.shape[0], num_ticks, endpoint=False))
+            
+        else:
+            raise Exception("Plotting mode '"+self.plot_mode+"' unknown")
+        
             
         xtickslabels = ["{:g}".format(i) for i in np.linspace(grid_info_nd.grids1d_list[0].domain_start, grid_info_nd.grids1d_list[0].domain_end, 4, endpoint=True)]
         self.ax.set_xticklabels(xtickslabels)
@@ -233,27 +240,51 @@ class Visualization2DMesh(_VisualizationBase):
     
     def update_plots(
         self,
-        grid_info_nd,
-        variable_data
+        grid_info_nd : libpdefd.GridInfoND,
+        variable_data,
+        contour_levels = None
     ):
         dim_reduced_data = self.get_dimreduced_data(variable_data)
         
         if self.firsttime:
             self._update_plots_firsttime(grid_info_nd, dim_reduced_data)
             self.firsttime = False
-            return
         
-        # Update limits
-        maxy = np.max(np.abs(dim_reduced_data))
-        
-        if 1:
-            if maxy > self.maxy or True:
+        else:
+            # Update limits
+            maxabsy = np.max(np.abs(dim_reduced_data))
+            
+            if maxabsy > self.maxabsy:
                 self.cbar.remove()
                 self.plotobject.remove()
                 self._update_plots_firsttime(grid_info_nd, dim_reduced_data)
-                return
+                self.maxabsy = maxabsy
             
-        self.plotobject.set_array(dim_reduced_data)
+            else:
+                self.plotobject.set_array(dim_reduced_data)
+        
+        if contour_levels is not None:
+            
+            if self.plot_mode == "colormesh":
+                x = grid_info_nd.grids1d_list[0].x_dofs
+                y = grid_info_nd.grids1d_list[1].x_dofs
+                
+                X, Y = np.meshgrid(x, y)
+                
+            elif self.plot_mode == "imshow":
+                raise Exception("Doesn't really work although it's much faster. Don't use this in combination with contours!")
+                x = grid_info_nd.grids1d_list[0].x_dofs
+                y = grid_info_nd.grids1d_list[1].x_dofs
+                
+                X, Y = np.meshgrid(x, y)
+            
+            
+            if self.contour != None:
+                for c in self.contour.collections: 
+                    c.remove()
+            
+            self.contour = self.ax.contour(X, Y, dim_reduced_data, levels=contour_levels, colors='black', linewidths=0.5)
+            #self.ax.clabel(self.contour, inline=True, fontsize=3, colors="black")
     
     
     def savefig(self, filename, **kwargs):

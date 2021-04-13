@@ -108,7 +108,7 @@ for the pressure by
 \begin_layout Standard
 \begin_inset Formula 
 \begin{align*}
-\overline{p} & =p_{0}\left(\overline{T}T_{s}^{-1}\right)^{R/C_{p}}\,\,\,\text{WARNING! THIS IS WRONG!}\\
+\overline{p} & =p_{0}\left(\overline{T}T_{s}^{-1}\right)^{R/C_{p}}\,\,\,\text{\textbf{WARNING!\,THIS\,IS\,WRONG!}}\\
  & =p_{0}\left(\overline{T}T_{s}^{-1}\right)^{C_{p}/R}\,\,\,\text{THIS IS RIGHT!}\\
  & =p_{0}\left(\overline{T}T_{s}^{-1}\right)^{\kappa}
 \end{align*}

@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import sys
+import numpy as np
 import pickle
 import argparse
 
@@ -48,6 +49,8 @@ with open(args.filename, 'rb') as file:
     }
     """
     
+    var_name = pickle_data['var_name']
+    
     def plot_update_title(i, vis_variable_name, title_prefix=""):
         title = title_prefix
         title += vis_variable_name
@@ -61,10 +64,21 @@ with open(args.filename, 'rb') as file:
         vis_slice = pickle_data['simconfig'].vis_slice,
         rescale = 1.0
     )
-
-    vis.update_plots(pickle_data['var_gridinfo'], pickle_data['var_data'])
     
-    plot_update_title(pickle_data['state_num_timestep'], pickle_data['var_name'])
+
+    if var_name in ['pot_t', 'pot_t_diff']:
+        
+        contour_levels = np.arange(-50, 51, 1)
+        
+        # Remove contour around 0
+        contour_levels = np.delete(contour_levels, np.where(np.isclose(contour_levels, 0)))
+        
+    else:
+        contour_levels = None
+    
+    vis.update_plots(pickle_data['var_gridinfo'], pickle_data['var_data'], contour_levels = contour_levels)
+    
+    plot_update_title(pickle_data['state_num_timestep'], var_name)
 
     if args.output == None:
         vis.show()
