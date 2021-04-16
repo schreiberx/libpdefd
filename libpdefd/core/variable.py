@@ -220,8 +220,11 @@ def VariableND(
     if isinstance(data_or_grid, GridInfoND) or isinstance(data_or_grid, GridInfo1D):
         retval._data = libpdefd_array.array_zeros(data_or_grid.shape)
 
+    elif isinstance(data_or_grid, np.ndarray):
+        retval._data = libpdefd_array.array(data_or_grid)
+
     elif isinstance(data_or_grid, libpdefd_array._array_base):
-        retval._data = libpdefd_array.array(data)
+        retval._data = libpdefd_array.array(data_or_grid)
         
     else:
         raise Exception("Type '"+str(type(data_or_grid))+" not supported")

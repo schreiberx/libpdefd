@@ -609,7 +609,7 @@ for (boundary_src, boundary_dst, boundary_src_right, boundary_dst_right) in iter
                 Increase frequency for higher order derivatives
                 """
                 u_0 = test_fun(src_grid.x_dofs, diff_order = 0)
-                u_0 = libpdefd.Variable1D(data=u_0)
+                u_0 = libpdefd.VariableND(u_0)
                 
                 u_0_diff_num = u_diff.apply(u_0)
                 u_0_diff = test_fun(dst_grid.x_dofs, diff_order = diff_order)
