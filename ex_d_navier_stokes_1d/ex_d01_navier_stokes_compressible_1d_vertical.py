@@ -287,9 +287,9 @@ def dU_dt(U):
 Setup initial conditions
 """
 
-w = libpdefd.Variable1D(w_grid, "w")
-p = libpdefd.Variable1D(p_grid, "p")
-t = libpdefd.Variable1D(t_grid, "t")
+w = libpdefd.VariableND(w_grid, "w")
+p = libpdefd.VariableND(p_grid, "p")
+t = libpdefd.VariableND(t_grid, "t")
 
 
 z_w = w_grid.x_dofs
@@ -374,9 +374,9 @@ def update_plot():
         line_t.set_ydata(U[2].data/const_t0)
 
     else:
-        line_w.set_ydata((U[0].data - U_t0[0].data))
-        line_p.set_ydata((U[1].data - U_t0[1].data)*0.005)
-        line_t.set_ydata((U[2].data - U_t0[2].data)*5)
+        line_w.set_ydata((U[0] - U_t0[0]).to_numpy_array())
+        line_p.set_ydata((U[1] - U_t0[1]).to_numpy_array()*0.005)
+        line_t.set_ydata((U[2] - U_t0[2]).to_numpy_array()*5)
 
     ax.set_ylim(-10, 10)
 
@@ -392,7 +392,7 @@ for i in range(num_timesteps):
     import time
     #time.sleep(0.1)
 
-    if 0:
+    if 1:
         U = libpdefd.tools.time_integrator_RK4(dU_dt, U, dt)
         
     else:

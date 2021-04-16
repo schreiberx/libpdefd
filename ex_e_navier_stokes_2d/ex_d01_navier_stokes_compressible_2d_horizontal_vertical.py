@@ -43,7 +43,7 @@ elif simconfig.ns_type == "nonlinear_a_grid__p_t":
     simpde = pde_navierstokes.SimPDE_NSNonlinearA__p_t(simconfig)
 
 else:
-    raise Exception("SWE of type '"+simconfig.ns_type+"' not supported")
+    raise Exception("Navier-Stokes equation of type '"+simconfig.ns_type+"' not supported")
 
 
 """
@@ -93,12 +93,11 @@ if simconfig.dt is not None:
 print("dt: "+str(dt))
 
 
-
 plot_generate = simconfig.output_plot_filename != "" or simconfig.output_pickle_filename != "" or simconfig.gui
 
 
 if plot_generate:
-    vis = libpdefd.vis.Visualization2DMesh(
+    vis = libpdefd.visualization.Visualization2DMesh(
         vis_dim_x = simconfig.vis_dim_x,
         vis_dim_y = simconfig.vis_dim_y,
         vis_slice = simconfig.vis_slice,
@@ -117,32 +116,33 @@ if plot_generate:
         
         print("Visualization contours: "+str(vis_contours))
     
+    
     def plot_get_data(variable_name):
         
         if variable_name in ['u', 'w', 'rho', 't', 'p', 'pot_t']:
-            var = simpde.get_var(U, variable_name)
+            variable = simpde.get_var(U, variable_name)
             vargridinfo = simgridinfondset[variable_name]
         
         elif variable_name == "p_diff":
-            var = simpde.get_var(U, "p") - p_t0
+            variable = simpde.get_var(U, "p") - p_t0
             vargridinfo = simgridinfondset["p"]
         
         elif variable_name == "rho_diff":
-            var = simpde.get_var(U, "rho") - rho_t0
+            variable = simpde.get_var(U, "rho") - rho_t0
             vargridinfo = simgridinfondset["rho"]
         
         elif variable_name == "t_diff":
-            var = simpde.get_var(U, "t") - t_t0
+            variable = simpde.get_var(U, "t") - t_t0
             vargridinfo = simgridinfondset["t"]
         
         elif variable_name == "pot_t_diff":
-            var = simpde.get_var(U, "pot_t") - pot_t_t0
+            variable = simpde.get_var(U, "pot_t") - pot_t_t0
             vargridinfo = simgridinfondset["pot_t"]
             
         else:
             raise Exception("variable_name "+str(variable_name)+" not supported")
         
-        return var.data, vargridinfo
+        return variable, vargridinfo
 
     
     def plot_update_title(i, vis_variable = None, title_prefix=""):
@@ -158,8 +158,8 @@ if plot_generate:
     
     def do_gui_plots(num_timestep, gui_block = True):
         
-        var, simgridinfo = plot_get_data(simconfig.vis_variable)
-        vis.update_plots(simgridinfo, var, vis_contours)
+        var_data, simgridinfo = plot_get_data(simconfig.vis_variable)
+        vis.update_plots(simgridinfo, var_data.to_numpy_array(), vis_contours)
         
         plot_update_title(num_timestep)
         vis.show(block=gui_block)
@@ -174,7 +174,7 @@ if plot_generate:
             simtime_str = get_simtime_str(simtime)
             
             var_data, simgridinfo = plot_get_data(varname)
-            vis.update_plots(simgridinfo, var_data, vis_contours)
+            vis.update_plots(simgridinfo, var_data.to_numpy_array(), vis_contours)
             
             plot_update_title(num_timestep, varname, title_prefix=simconfig.ns_type+"\n")
             
@@ -216,8 +216,10 @@ if plot_generate:
     
     
     if simconfig.gui:
+        
+        
         var_data, simgridinfo = plot_get_data(simconfig.vis_variable)
-        vis.update_plots(simgridinfo, var_data, vis_contours)
+        vis.update_plots(simgridinfo, var_data.to_numpy_array(), vis_contours)
         plot_update_title(0)
     
         vis.show(block=False)
@@ -244,21 +246,22 @@ simtime = 0
 
 U_leapfrog_prev = None
 
+
 while True:
+    
     if simconfig.output_text_freq > 0:
         if num_timestep % simconfig.output_text_freq == 0:
-    
+        
             if simconfig.verbosity >= 1:
                 print("timestep: "+str(num_timestep))
                 print(" + simtime: "+str(simtime))
-     
+            
             if simconfig.verbosity >= 2:
                 for varname in ['u', 'w', 'p', 'rho', 't']:
                     var = simpde.get_var(U, varname)
-                    min_ = np.min(np.abs(var.data))
-                    max_ = np.max(np.abs(var.data))
+                    min_ = var.reduce_minabs()
+                    max_ = var.reduce_maxabs()
                     print(" + "+varname+": "+str(min_)+" / "+str(max_))
-    
     
     do_output = False
     if simconfig.output_plot_timesteps_interval > 0:
@@ -288,11 +291,13 @@ while True:
             break
     
     if simconfig.time_integrator == "leapfrog":
+        
         U_backup = U
 
         U = libpdefd.tools.time_integrator_leapfrog(simpde.dU_dt, U, dt, U_leapfrog_prev)
         
         U_leapfrog_prev = U_backup
+
     else:
         U = libpdefd.tools.time_integrator(simconfig.time_integrator, simpde.dU_dt, U, dt)
     

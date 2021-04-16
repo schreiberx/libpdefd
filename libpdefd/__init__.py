@@ -1,5 +1,12 @@
+"""
+These are the classes which should be made accessible to programs
+"""
 
-from libpdefd.libpdefd import *
-import libpdefd.libpdefd_vis as vis
-import libpdefd.libpdefd_tools as tools
-import libpdefd.libpdefd_matrix as matrix
+from libpdefd.core.gridinfo import *
+from libpdefd.core.mesh import *
+from libpdefd.core.boundary import *
+from libpdefd.core.variable import *
+from libpdefd.core.operator import *
+
+import libpdefd.visualization as visualization
+import libpdefd.tools as tools

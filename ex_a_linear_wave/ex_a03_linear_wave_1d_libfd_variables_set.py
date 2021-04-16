@@ -101,15 +101,15 @@ boundaries_v = get_boundaries(boundary_condition_v)
 Setup variables
 """
 
-u_grid = libpdefd.GridInfo1D("u")
-v_grid = libpdefd.GridInfo1D("v")
+rho_grid = libpdefd.GridInfo1D("u")
+vel_grid = libpdefd.GridInfo1D("v")
 
 """
 Setup grids for each variable
 """
 if grid_setup == "auto":
-    u_grid.setup_autogrid(domain_start, domain_end, cell_res+1, boundaries=boundaries_u, staggered=False)
-    v_grid.setup_autogrid(domain_start, domain_end, cell_res+1, boundaries=boundaries_v, staggered=use_staggering)
+    rho_grid.setup_autogrid(domain_start, domain_end, cell_res+1, boundaries=boundaries_u, staggered=False)
+    vel_grid.setup_autogrid(domain_start, domain_end, cell_res+1, boundaries=boundaries_v, staggered=use_staggering)
 
 elif grid_setup == "manual":
     if use_staggering:
@@ -125,8 +125,8 @@ elif grid_setup == "manual":
     x *= domain_size
     x += domain_start
     
-    u_grid.setup_manualgrid(x, boundaries=boundaries_u)
-    v_grid.setup_manualgrid(x, boundaries=boundaries_v)
+    rho_grid.setup_manualgrid(x, boundaries=boundaries_u)
+    vel_grid.setup_manualgrid(x, boundaries=boundaries_v)
 
 else:
     raise Exception("GridInfo1D setup '"+grid_setup+"' not supported")
@@ -134,8 +134,8 @@ else:
 """
 Show what we are doing
 """
-print(u_grid)
-print(v_grid)
+print(rho_grid)
+print(vel_grid)
 
 """
 Setup differential operator
@@ -143,15 +143,15 @@ Setup differential operator
 rho_diff = libpdefd.OperatorDiff1D(
     diff_order = 1,
     min_approx_order = min_spatial_approx_order,
-    dst_grid = v_grid,
-    src_grid = u_grid,
+    dst_grid = vel_grid,
+    src_grid = rho_grid,
 )
 
 vel_diff = libpdefd.OperatorDiff1D(
     diff_order = 1,
     min_approx_order = min_spatial_approx_order,
-    dst_grid = u_grid,
-    src_grid = v_grid,
+    dst_grid = rho_grid,
+    src_grid = vel_grid,
 )
 
 
@@ -178,8 +178,8 @@ def dU_dt(U):
 Setup initial conditions
 """
 
-u = libpdefd.Variable1D(u_grid, "u")
-v = libpdefd.Variable1D(v_grid, "v")
+u = libpdefd.VariableND(rho_grid, "u")
+v = libpdefd.VariableND(vel_grid, "v")
 
 ic_center = 0.75*(domain_start + domain_end)
 
@@ -194,10 +194,10 @@ else:
     range_ = [0]
 
 for i in range_:
-    u += initial_condition(u_grid.x_dofs + domain_size*i)
+    u += initial_condition(rho_grid.x_dofs + domain_size*i)
 """
 u += libpdefd_tools.gaussian_bump(
-                u_grid.x_dofs,
+                rho_grid.x_dofs,
                 ic_center = ic_center*domain_size,
                 domain_size = domain_size,
                 boundary_condition = boundary_condition_u,
@@ -234,14 +234,14 @@ if output_freq != None:
 
     ps = pc.PlotStyles()
     
-    plotstyle = ps.getNextStyle(len(u_grid.x_dofs), 15)
-    line_u, = ax.plot(U[0].grid.x_dofs, U[0].data, **plotstyle, label="u(x)")
+    plotstyle = ps.getNextStyle(len(rho_grid.x_dofs), 15)
+    line_u, = ax.plot(rho_grid.x_dofs, U[0].to_numpy_array(), **plotstyle, label="u(x)")
     
-    plotstyle = ps.getNextStyle(len(v_grid.x_dofs), 15)
-    line_v, = ax.plot(U[1].grid.x_dofs, U[1].data, **plotstyle, label="v(x)")
+    plotstyle = ps.getNextStyle(len(vel_grid.x_dofs), 15)
+    line_v, = ax.plot(vel_grid.x_dofs, U[1].to_numpy_array(), **plotstyle, label="v(x)")
     
     ax.legend()
-    maxy = np.max(np.abs(U[0].data))
+    maxy = U[0].reduce_maxabs()
     ax.set_ylim(-maxy, maxy)
     if use_symlog:
         ax.set_yscale("symlog", linthresh=1e-4)
@@ -258,8 +258,8 @@ for i in range(num_timesteps):
 
     if output_freq != None:
         if i % output_freq == 0:
-            line_u.set_ydata(U[0].data)
-            line_v.set_ydata(U[1].data)
+            line_u.set_ydata(U[0].to_numpy_array())
+            line_v.set_ydata(U[1].to_numpy_array())
             
             ax.set_title("timestep "+str(i))
             

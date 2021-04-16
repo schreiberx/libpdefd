@@ -541,7 +541,7 @@ class SimPDE_Base:
     """
     def get_exner_from_p(self, data_p):
         a = self.simconfig.const_R / self.simconfig.const_c_p
-        return np.power(data_p / self.simconfig.const_p0, a)
+        return (data_p / self.simconfig.const_p0) ** a
 
     
     def getGridInfoNDSet(self):
@@ -556,8 +556,8 @@ class SimPDE_Base:
         mesh_nd_set = libpdefd.MeshNDSet(_mesh_nd_list)
         
         return mesh_nd_set
-
-
+    
+    
     def get_prog_variable_index_by_name(self, name):
         try:
             return (['u', 'w']+self.thermo_vars).index(name)
@@ -581,7 +581,6 @@ class SimPDE_Base:
             varset += [libpdefd.VariableND(self.t_grid, "t")]
     
         return libpdefd.VariableNDSet(varset)
-    
     
     
     def get_variable_set_all(self):
@@ -652,60 +651,6 @@ class SimPDE_NSNonlinearA__p_rho(SimPDE_Base):
         """
         See docs/navier_stokes_compressible.pdf
         """
-        
-        """
-        Continuity
-        
-        \frac{\partial\rho}{\partial t}=-\nabla\cdot\left(\rho\vec{v}\right)
-        """
-        self.op_rho__div_drho_u_dx = libpdefd.OperatorDiffND(
-            diff_dim = 0,
-            diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
-            src_grid = self.rho_u_grid,
-            dst_grid = self.p_grid,
-        )
-        self.op_rho__div_drho_w_dz = libpdefd.OperatorDiffND(
-            diff_dim = 1,
-            diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
-            src_grid = self.rho_w_grid,
-            dst_grid = self.p_grid,
-        )
-        
-        
-        self.op_rho__u_to_rho_u= libpdefd.OperatorDiffND(
-            diff_dim = 0,
-            diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
-            src_grid = self.u_grid,
-            dst_grid = self.rho_u_grid,
-        )
-        
-        self.op_rho__rho_to_rho_u = libpdefd.OperatorDiffND(
-            diff_dim = 0,
-            diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
-            src_grid = self.rho_grid,
-            dst_grid = self.rho_u_grid,
-        )
-        
-        self.op_rho__w_to_rho_w = libpdefd.OperatorDiffND(
-            diff_dim = 1,
-            diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
-            src_grid = self.w_grid,
-            dst_grid = self.rho_w_grid,
-        )
-        
-        self.op_rho__rho_to_rho_w = libpdefd.OperatorDiffND(
-            diff_dim = 1,
-            diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
-            src_grid = self.rho_grid,
-            dst_grid = self.rho_w_grid,
-        )
-        
         
         """
         Momentum equations
@@ -797,6 +742,60 @@ class SimPDE_NSNonlinearA__p_rho(SimPDE_Base):
         
         
         """
+        Continuity
+        
+        \frac{\partial\rho}{\partial t}=-\nabla\cdot\left(\rho\vec{v}\right)
+        """
+        self.op_rho__div_drho_u_dx = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 1,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.rho_u_grid,
+            dst_grid = self.p_grid,
+        )
+        self.op_rho__div_drho_w_dz = libpdefd.OperatorDiffND(
+            diff_dim = 1,
+            diff_order = 1,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.rho_w_grid,
+            dst_grid = self.p_grid,
+        )
+        
+        self.op_rho__u_to_rho_u = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.u_grid,
+            dst_grid = self.rho_u_grid,
+        )
+        
+        self.op_rho__rho_to_rho_u = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.rho_grid,
+            dst_grid = self.rho_u_grid,
+        )
+        
+        self.op_rho__w_to_rho_w = libpdefd.OperatorDiffND(
+            diff_dim = 1,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.w_grid,
+            dst_grid = self.rho_w_grid,
+        )
+        
+        self.op_rho__rho_to_rho_w = libpdefd.OperatorDiffND(
+            diff_dim = 1,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.rho_grid,
+            dst_grid = self.rho_w_grid,
+        )
+        
+        
+        
+        """
         Pressure equation
         
         \frac{\partial p}{\partial t}&=-\boldsymbol{v}\cdot\nabla p+\alpha p\nabla\cdot\boldsymbol{v}
@@ -846,30 +845,27 @@ class SimPDE_NSNonlinearA__p_rho(SimPDE_Base):
             src_grid = self.w_grid,
             dst_grid = self.p_grid,
         )
-
-
-
+    
+    
+    
     def dU_dt(self, Uset):
         u = Uset[0]
         w = Uset[1]
         p = Uset[2]
         rho = Uset[3]
-
-
-        u_ = self.op_rho__u_to_rho_u(u)
-        rho1_ = self.op_rho__rho_to_rho_u(rho)
-        w_ = self.op_rho__w_to_rho_w(w)
-        rho2_ = self.op_rho__rho_to_rho_w(rho)
         
-        self.drho_dt =  - self.op_rho__div_drho_u_dx(u_*rho1_)     \
-                        - self.op_rho__div_drho_w_dz(w_*rho2_)
-        
-        rho_ = self.op_u__rho_to_u(rho.reciprocal())
+        """
+        du/dt
+        """
+        rho_reciprocal_ = self.op_u__rho_to_u(rho.reciprocal())
         w_ = self.op_u__w_to_u(w)
         self.du_dt =    -self.op_u__grad_du_dx(u) * u         \
                         -self.op_u__grad_du_dz(u) * w_        \
-                        -rho_*self.op_u__grad_dp_dx(p)
+                        -rho_reciprocal_*self.op_u__grad_dp_dx(p)
         
+        """
+        dw/dt
+        """
         rho_ = self.op_w__rho_to_w(rho.reciprocal())
         u_ = self.op_w__u_to_w(u)
         self.dw_dt =    -self.op_w__grad_dw_dx(w) * u_         \
@@ -881,9 +877,23 @@ class SimPDE_NSNonlinearA__p_rho(SimPDE_Base):
         elif self.simconfig.const_g != 0:
             self.dw_dt -= self.simconfig.const_g
 
+        """
+        drho/dt
+        """
+        u_ = self.op_rho__u_to_rho_u(u)
+        rho1_ = self.op_rho__rho_to_rho_u(rho)
+        w_ = self.op_rho__w_to_rho_w(w)
+        rho2_ = self.op_rho__rho_to_rho_w(rho)
+        
+        self.drho_dt =  - self.op_rho__div_drho_u_dx(u_*rho1_)     \
+                        - self.op_rho__div_drho_w_dz(w_*rho2_)
+        
+
+        """
+        dp/dt
+        """
         u_ = self.op_p__u_to_p(u)
-        w_ = self.op_p__w_to_p(w)
-                
+        w_ = self.op_p__w_to_p(w)                
         self.dp_dt =    -u_ * self.op_p__grad_dp_dx(p)         \
                         -w_ * self.op_p__grad_dp_dz(p)         \
                         + self.alpha * p * ( self.op_p__div_du_dx(u) + self.op_p__div_dw_dz(w))
@@ -951,10 +961,6 @@ class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
         """
         
         """
-        No continuity equation for density!
-        """
-        
-        """
         Momentum equation
         
         \frac{\partial}{\partial t}u&=-\boldsymbol{v}\cdot\nabla u-\frac{1}{\rho}\nabla_{u}p
@@ -982,6 +988,30 @@ class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
             dst_grid = self.u_grid,
         )
         
+        self.op_u__w_to_u = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.w_grid,
+            dst_grid = self.u_grid,
+        )
+        
+        self.op_u__p_to_u = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.p_grid,
+            dst_grid = self.u_grid,
+        )
+        
+        self.op_u__t_to_u = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.t_grid,
+            dst_grid = self.u_grid,
+        )
+        
         
         """
         \frac{\partial}{\partial t}v&=-\boldsymbol{v}\cdot\nabla v-\frac{1}{\rho}\nabla_{v}p
@@ -1006,6 +1036,30 @@ class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
             diff_order = 1,
             min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.p_grid,
+            dst_grid = self.w_grid,
+        )
+        
+        self.op_w__u_to_w = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.u_grid,
+            dst_grid = self.w_grid,
+        )
+        
+        self.op_w__p_to_w = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.p_grid,
+            dst_grid = self.w_grid,
+        )
+        
+        self.op_w__t_to_w = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.t_grid,
             dst_grid = self.w_grid,
         )
         
@@ -1046,6 +1100,22 @@ class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
             dst_grid = self.p_grid,
         )
         
+        self.op_p__u_to_p = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.u_grid,
+            dst_grid = self.p_grid,
+        )
+        
+        self.op_p__w_to_p = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.w_grid,
+            dst_grid = self.p_grid,
+        )
+    
         
         """
         \frac{\partial T}{\partial t}&=-\boldsymbol{v}\cdot\nabla T+\frac{RT}{c_{p}}\alpha\nabla\cdot\boldsymbol{v}.
@@ -1081,32 +1151,72 @@ class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
             dst_grid = self.t_grid,
         )
         
-
+        self.op_t__u_to_t = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.u_grid,
+            dst_grid = self.t_grid,
+        )
+        
+        self.op_t__w_to_t = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.w_grid,
+            dst_grid = self.t_grid,
+        )
+    
+    
+    
+    
     def dU_dt(self, Uset):
         u = Uset[0]
         w = Uset[1]
         p = Uset[2]
         t = Uset[3]
         
+        """
+        du/dt
+        """
+        w_ = self.op_u__w_to_u(w)
+        p_ = self.op_u__p_to_u(p)
+        t_ = self.op_u__t_to_u(t)
         self.du_dt =    - self.op_u__grad_du_dx(u) * u         \
-                        - self.op_u__grad_du_dz(u) * w         \
-                        - self.R*t/p*self.op_u__grad_dp_dx(p)
+                        - self.op_u__grad_du_dz(u) * w_        \
+                        - self.R*t_/p_*self.op_u__grad_dp_dx(p)
         
-        self.dw_dt =    - self.op_w__grad_dw_dx(w) * u         \
+        """
+        dw/dt
+        """
+        u_ = self.op_w__u_to_w(u)
+        p_ = self.op_w__p_to_w(p)
+        t_ = self.op_w__t_to_w(t)
+        self.dw_dt =    - self.op_w__grad_dw_dx(w) * u_         \
                         - self.op_w__grad_dw_dz(w) * w         \
-                        - self.R*t/p*self.op_w__grad_dp_dz(p)
+                        - self.R*t_/p_*self.op_w__grad_dp_dz(p)
         
         if self.simconfig.gravity_field is not None:
             self.dw_dt -= self.simconfig.gravity_field
         elif self.simconfig.const_g != 0:
             self.dw_dt -= self.simconfig.const_g
         
-        self.dp_dt =    - u * self.op_p__grad_dp_dx(p)         \
-                        - w * self.op_p__grad_dp_dz(p)         \
+        """
+        dp/dt
+        """
+        u_ = self.op_p__u_to_p(u)
+        w_ = self.op_p__w_to_p(w)    
+        self.dp_dt =    - u_ * self.op_p__grad_dp_dx(p)         \
+                        - w_ * self.op_p__grad_dp_dz(p)         \
                         + self.alpha * p * (self.op_p__div_du_dx(u) + self.op_p__div_dw_dz(w))
         
-        self.dt_dt =    - u * self.op_t__grad_dt_dx(t)         \
-                        - w * self.op_t__grad_dt_dz(t)         \
+        """
+        dT/dt
+        """
+        u_ = self.op_t__u_to_t(u)
+        w_ = self.op_t__w_to_t(w)    
+        self.dt_dt =    - u_ * self.op_t__grad_dt_dx(t)         \
+                        - w_ * self.op_t__grad_dt_dz(t)         \
                         + self.beta * t * (self.op_t__div_du_dx(u) + self.op_t__div_dw_dz(w))
         
         if self.simconfig.const_viscosity != 0:
@@ -1167,29 +1277,9 @@ class SimPDE_NSNonlinearA__rho_t(SimPDE_Base):
         """
         
         """
-        Continuity
-        
-        \frac{\partial\rho}{\partial t}=-\nabla\cdot\left(\rho\vec{v}\right)
-        """
-        self.op_rho__div_drho_u_dx = libpdefd.OperatorDiffND(
-            diff_dim = 0,
-            diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
-            src_grid = self.rho_u_grid,
-            dst_grid = self.p_grid,
-        )
-        self.op_rho__div_drho_w_dz = libpdefd.OperatorDiffND(
-            diff_dim = 1,
-            diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
-            src_grid = self.rho_w_grid,
-            dst_grid = self.p_grid,
-        )
-        
-        """
         Momentum equation
         
-        \frac{\partial}{\partial t}u&=-\boldsymbol{v}\cdot\nabla u-\frac{R}{\rho}\nabla_{u}\left(\rho T\right)
+        \frac{\partial u}{\partial t}&=-\boldsymbol{v}\cdot\nabla u-\frac{R}{\rho}\nabla_{u}\left(\rho T\right)
         """
         self.op_u__grad_du_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
@@ -1213,6 +1303,23 @@ class SimPDE_NSNonlinearA__rho_t(SimPDE_Base):
             src_grid = self.rho_t_grid,
             dst_grid = self.u_grid,
         )
+        
+        self.op_u__rho_to_u = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.rho_grid,
+            dst_grid = self.u_grid,
+        )
+        
+        self.op_u__w_to_u = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.w_grid,
+            dst_grid = self.u_grid,
+        )
+        
         
         
         """
@@ -1240,6 +1347,77 @@ class SimPDE_NSNonlinearA__rho_t(SimPDE_Base):
             src_grid = self.rho_t_grid,
             dst_grid = self.w_grid,
         )
+        
+        self.op_w__rho_to_w = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.rho_grid,
+            dst_grid = self.w_grid,
+        )
+        
+        self.op_w__u_to_w = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.u_grid,
+            dst_grid = self.w_grid,
+        )
+        
+        
+        
+        """
+        Continuity
+        
+        \frac{\partial\rho}{\partial t}=-\nabla\cdot\left(\rho\vec{v}\right)
+        """
+        self.op_rho__div_drho_u_dx = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 1,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.rho_u_grid,
+            dst_grid = self.p_grid,
+        )
+        self.op_rho__div_drho_w_dz = libpdefd.OperatorDiffND(
+            diff_dim = 1,
+            diff_order = 1,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.rho_w_grid,
+            dst_grid = self.p_grid,
+        )
+        
+        self.op_rho__u_to_rho_u = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.u_grid,
+            dst_grid = self.rho_u_grid,
+        )
+        
+        self.op_rho__rho_to_rho_u = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.rho_grid,
+            dst_grid = self.rho_u_grid,
+        )
+        
+        self.op_rho__w_to_rho_w = libpdefd.OperatorDiffND(
+            diff_dim = 1,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.w_grid,
+            dst_grid = self.rho_w_grid,
+        )
+        
+        self.op_rho__rho_to_rho_w = libpdefd.OperatorDiffND(
+            diff_dim = 1,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.rho_grid,
+            dst_grid = self.rho_w_grid,
+        )
+        
         
         
         """
@@ -1276,33 +1454,73 @@ class SimPDE_NSNonlinearA__rho_t(SimPDE_Base):
             dst_grid = self.t_grid,
         )
     
+        self.op_t__u_to_t = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.u_grid,
+            dst_grid = self.t_grid,
+        )
+        
+        self.op_t__w_to_t = libpdefd.OperatorDiffND(
+            diff_dim = 0,
+            diff_order = 0,
+            min_approx_order = self.simconfig.min_spatial_approx_order,
+            src_grid = self.w_grid,
+            dst_grid = self.t_grid,
+        )
+    
+    
     
     def dU_dt(self, Uset):
         u = Uset[0]
         w = Uset[1]
         rho = Uset[2]
         t = Uset[3]
-                
-        self.drho_dt =  - self.op_rho__div_drho_u_dx(u*rho)     \
-                        - self.op_rho__div_drho_w_dz(w*rho)
         
+        """
+        du/dt
+        """
         rho_mul_t = rho*t
-
-        self.du_dt =    - self.op_u__grad_du_dx(u) * u         \
-                        - self.op_u__grad_du_dz(u) * w         \
-                        - self.R/rho*self.op_u__grad_drho_t_dx(rho_mul_t)
         
-        self.dw_dt =    - self.op_w__grad_dw_dx(w) * u         \
-                        - self.op_w__grad_dw_dz(w) * w         \
-                        - self.R/rho*self.op_w__grad_drho_t_dz(rho_mul_t)
-                        
+        rho_reciprocal_ = self.op_u__rho_to_u(rho.reciprocal())
+        w_ = self.op_u__w_to_u(w)
+        self.du_dt =    - self.op_u__grad_du_dx(u) * u          \
+                        - self.op_u__grad_du_dz(u) * w_         \
+                        - self.R*rho_reciprocal_*self.op_u__grad_drho_t_dx(rho_mul_t)
+        
+        """
+        dw/dt
+        """
+        rho_reciprocal_ = self.op_w__rho_to_w(rho.reciprocal())
+        u_ = self.op_w__u_to_w(u)
+        self.dw_dt =    - self.op_w__grad_dw_dx(w) * u_         \
+                        - self.op_w__grad_dw_dz(w) * w          \
+                        - self.R*rho_reciprocal_*self.op_w__grad_drho_t_dz(rho_mul_t)
+        
         if self.simconfig.gravity_field is not None:
             self.dw_dt -= self.simconfig.gravity_field
         elif self.simconfig.const_g != 0:
             self.dw_dt -= self.simconfig.const_g
         
-        self.dt_dt =    - u * self.op_t__grad_dt_dx(t)         \
-                        - w * self.op_t__grad_dt_dz(t)         \
+        
+        """
+        drho/dt
+        """
+        u_ = self.op_rho__u_to_rho_u(u)
+        rho1_ = self.op_rho__rho_to_rho_u(rho)
+        w_ = self.op_rho__w_to_rho_w(w)
+        rho2_ = self.op_rho__rho_to_rho_w(rho)
+        self.drho_dt =  - self.op_rho__div_drho_u_dx(u_*rho1_)     \
+                        - self.op_rho__div_drho_w_dz(w_*rho2_)
+        
+        """
+        dT/dt
+        """
+        u_ = self.op_t__u_to_t(u)
+        w_ = self.op_t__w_to_t(w)
+        self.dt_dt =    - u_ * self.op_t__grad_dt_dx(t)         \
+                        - w_ * self.op_t__grad_dt_dz(t)         \
                         + self.beta * t * (self.op_t__div_du_dx(u) + self.op_t__div_dw_dz(w))
         
         if self.simconfig.const_viscosity != 0:
@@ -1319,22 +1537,32 @@ class SimPDE_NSNonlinearA__rho_t(SimPDE_Base):
 
 
     def get_var(self, Uset, varname):
+        assert isinstance(Uset, libpdefd.VariableNDSet)
+        
         """
         Return either prognostic variable from Uset or compute the variable if it doesn't exist
         """
         if varname in self.var_names_prognostic:
             idx = self.get_prog_variable_index_by_name(varname)
-            return Uset[idx]
+            retval = Uset[idx]
+            assert isinstance(retval, libpdefd.VariableND)
+            assert isinstance(retval.data, libpdefd.array._array_base)
+            return retval
         
         rho = Uset[2]
         t = Uset[3]
         
         if varname == "p":
             p = rho*t*self.R
+            assert isinstance(p, libpdefd.VariableND)
+            assert isinstance(p.data, libpdefd.array._array_base)
             return p
     
         elif varname == "pot_t":
             p = rho*t*self.R
-            return self.get_exner_from_p(p)*t
+            pot_t = self.get_exner_from_p(p)*t
+            assert isinstance(pot_t, libpdefd.VariableND)
+            assert isinstance(pot_t.data, libpdefd.array._array_base)
+            return pot_t
         
         raise Exception("Unkown variable '"+str(varname))

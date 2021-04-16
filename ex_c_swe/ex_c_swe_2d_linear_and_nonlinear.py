@@ -134,7 +134,7 @@ if len(sys.argv) >= 3:
 
 if output_freq != None:
     
-    vis = libpdefd.vis.Visualization2DMesh(
+    vis = libpdefd.visualization.Visualization2DMesh(
         vis_dim_x = simconfig.vis_dim_x,
         vis_dim_y = simconfig.vis_dim_y,
         vis_slice = simconfig.vis_slice,
@@ -165,8 +165,7 @@ if output_freq != None:
         
         for i in simpde.var_names_prognostic:
             idx = simpde.get_prog_variable_index_by_name(i)
-            print(i+": min/max "+str(np.min(U[idx].data))+", "+str(np.max(U[idx].data)))
-
+            print(i+": min/max "+str(U[idx].reduce_min())+", "+str(U[idx].reduce_max()))
 
 
     def plot_update_title(i):

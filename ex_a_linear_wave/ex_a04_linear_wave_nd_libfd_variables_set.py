@@ -317,12 +317,12 @@ if len(sys.argv) >= 3:
 if output_freq != None:
     
     if num_dims == 1:
-        vis = libpdefd.vis.Visualization1D(
+        vis = libpdefd.visualization.Visualization1D(
             use_symlog=use_symlog
         )
         
     else:
-        vis = libpdefd.vis.Visualization2DMesh(
+        vis = libpdefd.visualization.Visualization2DMesh(
             vis_dim_x = vis_dim_x,
             vis_dim_y = vis_dim_y,
             vis_slice = vis_slice

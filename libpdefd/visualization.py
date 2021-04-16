@@ -146,6 +146,8 @@ class Visualization2DMesh(_VisualizationBase):
         self,
         variable_data
     ):
+        assert isinstance(variable_data, np.ndarray)
+        
         slices = [slice(0, variable_data.shape[i]) for i in range(len(variable_data.shape))]
         
         for i in range(len(variable_data.shape)-1, -1, -1):
@@ -169,10 +171,14 @@ class Visualization2DMesh(_VisualizationBase):
     def _update_plots_firsttime(
         self,
         grid_info_nd : libpdefd.GridInfoND,
-        variable_data
+        variable_data : np.ndarray
     ):
+        assert isinstance(grid_info_nd, libpdefd.GridInfoND)
+        assert isinstance(variable_data, np.ndarray)
+        
         if 1:
             self.maxabsy = np.max(np.abs(variable_data))
+            
             
             self.maxy = np.max(variable_data)
             self.miny = np.min(variable_data)
@@ -244,6 +250,9 @@ class Visualization2DMesh(_VisualizationBase):
         variable_data,
         contour_levels = None
     ):
+        if not isinstance(variable_data, np.ndarray):
+            variable_data = variable_data.to_numpy_array()
+
         dim_reduced_data = self.get_dimreduced_data(variable_data)
         
         if self.firsttime:
@@ -289,4 +298,4 @@ class Visualization2DMesh(_VisualizationBase):
     
     def savefig(self, filename, **kwargs):
         self.fig.savefig(filename, **kwargs)
-    
+

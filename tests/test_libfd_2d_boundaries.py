@@ -74,13 +74,13 @@ for num_dims in [2,3,4]:
         for dim in range(num_dims):
             print(" + testing diff in dim: "+str(dim))
     
-            err = np.max(np.abs(var.data)) - sim_var_avg
+            err = var.reduce_maxabs() - sim_var_avg
             assert err < 1e-10, "Error too high"
             
             g = grad[dim]
             
             grad_var = g(var)
             
-            err = np.max(np.abs(grad_var.data))
+            err = grad_var.reduce_maxabs()
             assert err < 1e-10, "Error too high"
     

@@ -4,6 +4,8 @@ import sys
 import numpy as np
 import libpdefd
 
+from libpdefd.array_matrix.libpdefd_array import *
+
 
 
 """
@@ -174,7 +176,7 @@ def RK4(f, u, dt):
     k4 = f([u[i] + k3[i]*dt for i in range(N)])
     
     # u + 1/6*dt * (k1 + 2*k2 + 2*k3 + k4)
-    return [u[i] + (k1[i] + k2[i]*2 + k3[i]*2 + k4[i])*(1/6*dt) for i in range(N)]
+    return [u[i] + (k1[i] + k2[i]*2 + k3[i]*2 + k4[i])*(1./6.*dt) for i in range(N)]
 
 
 
@@ -201,8 +203,8 @@ def dU_dt(U):
 """
 Setup initial conditions
 """
-rho = np.zeros_like(rho_grid.x_dofs)
-vel = np.zeros_like(vel_grid.x_dofs)
+rho = array_zeros_like(rho_grid.x_dofs)
+vel = array_zeros_like(vel_grid.x_dofs)
 
 ic_center = 0.75*(domain_start + domain_end)
 
@@ -258,18 +260,19 @@ if output_freq != None:
     ps = pc.PlotStyles()
     
     plotstyle = ps.getNextStyle(len(rho_grid.x_dofs), 15)
-    line_rho, = ax.plot(rho_grid.x_dofs, U[0].data, **plotstyle, label="rho(x)")
+    line_rho, = ax.plot(rho_grid.x_dofs, U[0].to_numpy_array(), **plotstyle, label="rho(x)")
     
     plotstyle = ps.getNextStyle(len(vel_grid.x_dofs), 15)
-    line_vel, = ax.plot(vel_grid.x_dofs, U[1].data, **plotstyle, label="vel(x)")
+    line_vel, = ax.plot(vel_grid.x_dofs, U[1].to_numpy_array(), **plotstyle, label="vel(x)")
     
     ax.legend()
-    maxy = np.max(np.abs(U[0].data))
+    maxy = U[0].reduce_maxabs()
     ax.set_ylim(-maxy, maxy)
     if use_symlog:
         ax.set_yscale("symlog", linthresh=1e-4)
     
     plt.show(block=False)
+
 
 
 import time
@@ -282,8 +285,8 @@ for i in range(num_timesteps):
 
     if output_freq != None:
         if i % output_freq == 0:
-            line_rho.set_ydata(U[0])
-            line_vel.set_ydata(U[1])
+            line_rho.set_ydata(U[0].to_numpy_array())
+            line_vel.set_ydata(U[1].to_numpy_array())
             
             ax.set_title("timestep "+str(i))
             

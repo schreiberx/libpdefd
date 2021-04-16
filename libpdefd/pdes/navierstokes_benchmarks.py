@@ -19,6 +19,7 @@ class Benchmarks:
         retval = f(y_coords)
         return retval
     
+    
     def setup_simconfig_bc_horizontal_dirichlet(
         self,
         simconfig
@@ -45,6 +46,7 @@ class Benchmarks:
         simconfig.boundary_conditions_rho_u = [[libpdefd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
         simconfig.boundary_conditions_rho_w = [[libpdefd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
         simconfig.boundary_conditions_rho_t = [[libpdefd.BoundaryPeriodic() for _ in range(2)] for _D in range(self.D)]
+    
     
     def setup_simconfig_bc_vertical_periodic_dirichlet(
         self,
@@ -288,7 +290,6 @@ class Benchmarks:
         sim_rho_scaling = 0.01    # Scaling of density IC
         sim_p_scaling = 0.01      # Scaling of pressure IC
         
-
         """
         d0 information:
         
@@ -337,7 +338,7 @@ class Benchmarks:
             Apply ideal gas las    p = R*T*rho
             t = p/(R*rho)
             """
-            return p_var.data/(simconfig.const_R*rho_var.data)
+            return p_var/(simconfig.const_R*rho_var)
         
         
         def fun_rho_from_p_t(mesh_data, p_var, t_var):
@@ -345,14 +346,14 @@ class Benchmarks:
             Apply ideal gas las    p = R*T*rho
             rho = p/(R*T)
             """
-            return p_var.data/(simconfig.const_R*t_var.data)
+            return p_var/(simconfig.const_R*t_var)
         
         
         def fun_p_from_rho_t(mesh_data, rho_var, t_var):
             """
             Apply ideal gas las    p = R*T*rho
             """
-            return simconfig.const_R*t_var.data*rho_var.data
+            return simconfig.const_R*t_var*rho_var
     
     
         def setup_dofs_vertical_steady_state(
@@ -444,7 +445,7 @@ class Benchmarks:
             
             variable_set_all['rho'].set(fun_rho_from_p_t(t_mesh_data, variable_set_all['p'], variable_set_all['t']))
             
-        
+
         elif simconfig.benchmark_name in ["vertical_steady_state", "vertical_bump", "vertical_steady_state_gravity_field"]:
             
             if simconfig.benchmark_name in ["vertical_steady_state_gravity_field"]:

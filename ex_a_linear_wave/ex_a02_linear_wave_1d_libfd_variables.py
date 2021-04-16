@@ -192,8 +192,8 @@ def dU_dt(U):
 """
 Setup initial conditions
 """
-rho = libpdefd.Variable1D(rho_grid, "rho")
-vel = libpdefd.Variable1D(vel_grid, "vel")
+rho = libpdefd.VariableND(rho_grid, "rho")
+vel = libpdefd.VariableND(vel_grid, "vel")
 
 ic_center = 0.75*(domain_start + domain_end)
 
@@ -248,13 +248,13 @@ if output_freq != None:
     ps = pc.PlotStyles()
     
     plotstyle = ps.getNextStyle(len(rho_grid.x_dofs), 15)
-    line_rho, = ax.plot(U[0].grid.x_dofs, U[0].data, **plotstyle, label="u(x)")
+    line_rho, = ax.plot(rho_grid.x_dofs, U[0].to_numpy_array(), **plotstyle, label="u(x)")
     
     plotstyle = ps.getNextStyle(len(vel_grid.x_dofs), 15)
-    line_vel, = ax.plot(U[1].grid.x_dofs, U[1].data, **plotstyle, label="v(x)")
+    line_vel, = ax.plot(vel_grid.x_dofs, U[1].to_numpy_array(), **plotstyle, label="v(x)")
     
     ax.legend()
-    maxy = np.max(np.abs(U[0].data))
+    maxy = U[0].reduce_maxabs()
     ax.set_ylim(-maxy, maxy)
     if use_symlog:
         ax.set_yscale("symlog", linthresh=1e-4)
@@ -272,8 +272,8 @@ for i in range(num_timesteps):
 
     if output_freq != None:
         if i % output_freq == 0:
-            line_rho.set_ydata(U[0].data)
-            line_vel.set_ydata(U[1].data)
+            line_rho.set_ydata(U[0].to_numpy_array())
+            line_vel.set_ydata(U[1].to_numpy_array())
             
             ax.set_title("timestep "+str(i))
             

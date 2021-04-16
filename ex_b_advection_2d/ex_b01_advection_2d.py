@@ -343,9 +343,6 @@ def dU_dt(U):
     
     retval[0] = drho_dt
     
-    if 0:
-        print(" + drho_dt: "+str(np.min(drho_dt.data))+", "+str(np.max(drho_dt.data)))
-
     return retval
 
 
@@ -376,9 +373,9 @@ rho_var += libpdefd.tools.gaussian_bump(
             )*sim_rho_init_pert_rescale
 
 if 1:
-    print(" + rho: "+str(np.min(rho_var.data))+", "+str(np.max(rho_var.data)))
-    print(" + v0: "+str(np.min(v0_var.data))+", "+str(np.max(v0_var.data)))
-    print(" + v1: "+str(np.min(v1_var.data))+", "+str(np.max(v1_var.data)))
+    print(" + rho: "+str(rho_var.reduce_min())+", "+str(rho_var.reduce_max()))
+    print(" + v0: "+str(v0_var.reduce_min())+", "+str(v0_var.reduce_max()))
+    print(" + v1: "+str(v1_var.reduce_min())+", "+str(v1_var.reduce_max()))
 
 
 
@@ -390,7 +387,7 @@ U = libpdefd.VariableNDSet([rho_var])
 Guess time step size
 """
 dt = np.min(domain_size/(cell_res+1))
-dt *= 1.0/np.sqrt(np.max([np.abs(v0_var.data), np.abs(v1_var.data)]))
+dt *= 1.0/np.sqrt(np.max([v0_var.reduce_maxabs(), v1_var.reduce_maxabs()]))
 #dt *= 0.25
 dt *= dt_scaling
 
@@ -413,7 +410,7 @@ if len(sys.argv) >= 3:
 
 if output_freq != None:
     
-    vis = libpdefd.vis.Visualization2DMesh(
+    vis = libpdefd.visualization.Visualization2DMesh(
         vis_dim_x = vis_dim_x,
         vis_dim_y = vis_dim_y,
         vis_slice = vis_slice

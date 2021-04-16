@@ -1,3 +1,6 @@
+#! /usr/bin/env python3
+
+
 import numpy as np
 import scipy as sp
 import scipy.sparse as sparse
@@ -606,6 +609,7 @@ for (boundary_src, boundary_dst, boundary_src_right, boundary_dst_right) in iter
                 Increase frequency for higher order derivatives
                 """
                 u_0 = test_fun(src_grid.x_dofs, diff_order = 0)
+                u_0 = libpdefd.Variable1D(data=u_0)
                 
                 u_0_diff_num = u_diff.apply(u_0)
                 u_0_diff = test_fun(dst_grid.x_dofs, diff_order = diff_order)
@@ -646,7 +650,7 @@ for (boundary_src, boundary_dst, boundary_src_right, boundary_dst_right) in iter
                 if check_errors:
                     if error_norm == "max":
                         # Max norm
-                        error = np.max(np.abs(u_0_diff_num - u_0_diff))
+                        error = (u_0_diff_num - u_0_diff).reduce_maxabs()
                         
                     elif error_norm == "l2":
                         y = u_0_diff_num - u_0_diff

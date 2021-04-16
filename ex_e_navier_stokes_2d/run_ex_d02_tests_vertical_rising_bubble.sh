@@ -3,8 +3,8 @@
 BENCHMARK_NAME=vertical_bump
 TIME_INTEGRATOR=rk4
 
-for NS_TYPE in nonlinear_a_grid__p_rho nonlinear_a_grid__rho_t nonlinear_a_grid__p_t; do
-#for ns_type in nonlinear_a_grid__p_rho; do
+#for NS_TYPE in nonlinear_a_grid__p_rho nonlinear_a_grid__rho_t nonlinear_a_grid__p_t; do
+for NS_TYPE in nonlinear_a_grid__p_rho; do
 
 	ARGS=""
 	ARGS+=" -v 10"
