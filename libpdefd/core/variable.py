@@ -285,7 +285,7 @@ class VariableNDSet:
         variable_list: list,
     ):
         if not isinstance(variable_list, list):
-            if not isinstance(variable_list, Variable1D) and not isinstance(variable_list, VariableND):
+            if not isinstance(variable_list, _VariableND_Base):
                 raise Exception("Only Variables are supported")
             
             variable_list = [variable_list]
@@ -352,7 +352,7 @@ class VariableNDSet:
     
     
     def __rmul__(self, a):
-        if isinstance(a, Variable1D):
+        if isinstance(a, _VariableND_Base):
             return VariableNDSet([a.variable_list[i] * self.variable_list[i] for i in range(len(self.variable_list))])
  
         else:

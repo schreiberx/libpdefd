@@ -35,14 +35,6 @@ class _operator_base:
             return retval.reshape(self._dst_grid.shape)
             #return self._L_sparse.dot(x) + self._c
         
-        elif isinstance(x, variable.Variable1D):
-            raise Exception("TODO")
-            return variable.Variable1D(
-                self._dst_grid,
-                name = self._name+"("+x.name+")",
-                data = self._L_sparse.dot(x._data) + self._c
-            )
-        
         elif isinstance(x, VariableND) or isinstance(x, variable._VariableND_Base):
             raise Exception("TODO")
             assert self._L_sparse.shape[0] == self._c.shape[0]
@@ -94,7 +86,7 @@ class _operator_base:
 
     def __mul__(self, a):
         retval = self.__class__()
-        if isinstance(a, Variable1D):
+        if isinstance(a, VariableND):
             retval._L_sparse = self._L_sparse * a._L_sparse
         else:
             retval._L_sparse = self._L_sparse * a
@@ -102,7 +94,7 @@ class _operator_base:
 
     def __rmul__(self, a):
         retval = self.__class__()
-        if isinstance(a, Variable1D):
+        if isinstance(a, VariableND):
             retval._L_sparse = a._L_sparse * self._L_sparse
         else:
             retval._L_sparse = a * self._L_sparse
