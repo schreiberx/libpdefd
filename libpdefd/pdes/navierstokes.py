@@ -935,7 +935,7 @@ class SimPDE_NSNonlinearA__p_rho(SimPDE_Base):
         
         elif varname == "pot_t":
             t = p / (rho*self.R)
-            return self.get_exner_from_p(p)*t
+            return t/self.get_exner_from_p(p)
         
         raise Exception("Unkown variable '"+str(varname))
 
@@ -1240,16 +1240,16 @@ class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
         if varname in self.var_names_prognostic:
             idx = self.get_prog_variable_index_by_name(varname)
             return Uset[idx]
-
+        
         p = Uset[2]
         t = Uset[3]
         
         if varname == "rho":
             rho = p/(t*self.R)
             return rho
-    
+        
         elif varname == "pot_t":
-            return self.get_exner_from_p(p)*t
+            return t/self.get_exner_from_p(p)
         
         raise Exception("Unkown variable '"+str(varname))
 
@@ -1559,8 +1559,11 @@ class SimPDE_NSNonlinearA__rho_t(SimPDE_Base):
             return p
     
         elif varname == "pot_t":
+            """
+            Compute potential temperature
+            """
             p = rho*t*self.R
-            pot_t = self.get_exner_from_p(p)*t
+            pot_t = t/self.get_exner_from_p(p)
             assert isinstance(pot_t, libpdefd.VariableND)
             assert isinstance(pot_t.data, libpdefd.array._array_base)
             return pot_t
