@@ -1168,8 +1168,6 @@ class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
         )
     
     
-    
-    
     def dU_dt(self, Uset):
         u = Uset[0]
         w = Uset[1]
@@ -1252,6 +1250,7 @@ class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
             return t/self.get_exner_from_p(p)
         
         raise Exception("Unkown variable '"+str(varname))
+
 
 
 class SimPDE_NSNonlinearA__rho_t(SimPDE_Base):
