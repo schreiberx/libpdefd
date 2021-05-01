@@ -58,7 +58,7 @@ with open(args.filename, 'rb') as file:
         title += ", t="+str(round(i*pickle_data['state_dt'], 3))+" sec"
         vis.set_title(title)
 
-    vis = libpdefd.vis.Visualization2DMesh(
+    vis = libpdefd.visualization.Visualization2DMesh(
         vis_dim_x = pickle_data['simconfig'].vis_dim_x,
         vis_dim_y = pickle_data['simconfig'].vis_dim_y,
         vis_slice = pickle_data['simconfig'].vis_slice,
