@@ -11,12 +11,15 @@ import libpdefd
 
 parser = argparse.ArgumentParser()
 
+parser.add_argument('--figscale', dest="figscale", type=float, help="Scaling of figure")
 parser.add_argument('--filename', dest="filename", type=str, help="Pickle filename")
 parser.add_argument('--output', dest="output", type=str, help="Output filename")
 parser.add_argument('--dpi', dest="dpi", type=int, help="DPI in case of bitmap output format")
 
 
 args = parser.parse_args()
+if args.figscale is None:
+    args.figscale = 1.0
 
 if args.filename == None:
     raise Exception("Please provide at least --filename")
@@ -62,13 +65,14 @@ with open(args.filename, 'rb') as file:
         vis_dim_x = pickle_data['simconfig'].vis_dim_x,
         vis_dim_y = pickle_data['simconfig'].vis_dim_y,
         vis_slice = pickle_data['simconfig'].vis_slice,
-        rescale = 1.0
+        rescale = 1.0,
+        figscale = args.figscale,
     )
     
 
     if var_name in ['pot_t', 'pot_t_diff']:
         
-        contour_levels = np.arange(-50, 51, 1)
+        contour_levels = np.arange(-100, 101, 1)
         
         # Remove contour around 0
         contour_levels = np.delete(contour_levels, np.where(np.isclose(contour_levels, 0)))
@@ -83,9 +87,11 @@ with open(args.filename, 'rb') as file:
     if args.output == None:
         vis.show()
     else:
+        #kwargs = {'figsize': (1920, 1080)}
+        kwargs = {}
         if args.dpi == None:
-            vis.savefig(args.output)
+            vis.savefig(args.output, **kwargs)
         else:
-            vis.savefig(args.output, dpi=args.dpi)
+            vis.savefig(args.output, dpi=args.dpi, **kwargs)
 
 

@@ -37,7 +37,8 @@ if [ "#$1" == "#print_parallel_jobs" ]; then
 				ARGS=""
 				ARGS+=" --filename ${INFILE}"
 				ARGS+=" --output ${OUTFILE}"
-				ARGS+=" --dpi 300"
+				ARGS+=" --dpi 600"
+				ARGS+=" --figscale 1.5"
 
 				echo "$EXEC $ARGS"
 			done

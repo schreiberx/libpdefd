@@ -95,7 +95,7 @@ class _array_base:
     
     def __pow__(self, a):
         if isinstance(a, self.__class__):
-            return self.__class__(a._data ** a._data)
+            return self.__class__(self._data ** a._data)
         return self.__class__(self._data ** a)
     
     def __truediv__(self, a):
