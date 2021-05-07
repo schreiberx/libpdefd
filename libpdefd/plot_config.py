@@ -18,7 +18,7 @@
 import matplotlib.pyplot as plt
 
 def setup(
-        scale = 1.0,    # Scaling factor for default image size
+        scale = None,    # Scaling factor for default image size
                         # Use only this to resize your image.
         nrows = 1,      # Number of rows in plot
         ncols = 1,      # Number of colums in plot
@@ -32,6 +32,9 @@ def setup(
 
     Use the 'scale' parameter to enlarge or shrink the picture if required
     """
+    
+    if scale == None:
+        scale = 1.0
 
     from matplotlib import rc
 
