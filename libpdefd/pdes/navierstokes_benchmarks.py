@@ -163,7 +163,14 @@ class Benchmarks:
             
             simconfig.compute_t0_ideal_gas()
         
-        elif simconfig.benchmark_name in ["vertical_straka", "vertical_straka_symmetric", "vertical_straka_symmetric_nobump"]:
+        elif simconfig.benchmark_name.startswith("vertical_straka"):
+            """
+            e.g.
+            vertical_straka
+            vertical_straka_visc_large
+            vertical_straka_symmetric
+            vertical_straka_symmetric_nobump
+            """
             
             """
             gas constant for dry air
@@ -194,7 +201,11 @@ class Benchmarks:
             Viscosity parameter
             """
             simconfig.const_viscosity_order = 2
-            simconfig.const_viscosity = 75
+            
+            if "visc_large" in simconfig.benchmark_name:
+                simconfig.const_viscosity = 150
+            else:
+                simconfig.const_viscosity = 75
             
             """
             Surface temperature in Kelvin
@@ -209,13 +220,14 @@ class Benchmarks:
             """
             Domain size: 80 km x 80 km
             """
-            if simconfig.benchmark_name in ["vertical_straka"]:
+            if "symmetric" in simconfig.benchmark_name:
+                simconfig.domain_start = np.array([-25.6*1e3, 0.])
+                simconfig.domain_end = np.array([25.6*1e3, 6.4*1e3])
+
+            else:
                 simconfig.domain_start = np.array([0., 0.])
                 simconfig.domain_end = np.array([25.6*1e3, 6.4*1e3])
             
-            elif simconfig.benchmark_name in ["vertical_straka_symmetric", "vertical_straka_symmetric_nobump"]:
-                simconfig.domain_start = np.array([-25.6*1e3, 0.])
-                simconfig.domain_end = np.array([25.6*1e3, 6.4*1e3])
         
             
             """
