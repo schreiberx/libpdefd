@@ -200,12 +200,10 @@ class Benchmarks:
             """
             Viscosity parameter
             """
-            simconfig.const_viscosity_order = 2
-            
             if "visc_large" in simconfig.benchmark_name:
-                simconfig.const_viscosity = 150
+                simconfig.const_viscosity_all = 150
             else:
-                simconfig.const_viscosity = 75
+                simconfig.const_viscosity_all = 75
             
             """
             Surface temperature in Kelvin

@@ -80,11 +80,65 @@ class SimConfig:
         self.const_g = 9.81       # Gravity
         parser.add_argument('--const-g', dest="const_g", type=float, help="Gravity")
         
-        self.const_viscosity = float(0)
-        parser.add_argument('--const-viscosity', dest="const_viscosity", type=float, help="Viscosity")
+        """
+        Regular viscosity comes here!
+        """
+        self.const_viscosity_vel = float(0)
+        parser.add_argument('--const-viscosity-vel', dest="const_viscosity_vel", type=float, help="Viscosity on velocity")
 
-        self.const_viscosity_order = 2
-        parser.add_argument('--viscosity-order', dest="viscosity_order", type=float, help="Viscosity order")
+        self.const_viscosity_p = float(0)
+        parser.add_argument('--const-viscosity-p', dest="const_viscosity_p", type=float, help="Viscosity on pressure p")
+
+        self.const_viscosity_rho = float(0)
+        parser.add_argument('--const-viscosity-rho', dest="const_viscosity_rho", type=float, help="Viscosity on density rho")
+
+        self.const_viscosity_t = float(0)
+        parser.add_argument('--const-viscosity-t', dest="const_viscosity_t", type=float, help="Viscosity on (real) temperature t")
+
+        # Special variable. If this is set, this will override all other variables
+        self.const_viscosity_all = None
+        parser.add_argument('--const-viscosity-all', dest="const_viscosity_all", type=float, help="Viscosity on all variables")
+
+        
+        """
+        Hyper hyperviscosity comes here!
+        """
+        self.const_hyperviscosity_vel = float(0)
+        parser.add_argument('--const-hyperviscosity-vel', dest="const_hyperviscosity_vel", type=float, help="Hyperviscosity on velocity")
+
+        self.const_hyperviscosity_vel_order = 4
+        parser.add_argument('--const-hyperviscosity-vel-order', dest="const_hyperviscosity_vel_order", type=int, help="Hyperviscosity order on velocity")
+
+
+        self.const_hyperviscosity_p = float(0)
+        parser.add_argument('--const-hyperviscosity-p', dest="const_hyperviscosity_p", type=float, help="Hyperviscosity on pressure p")
+
+        self.const_hyperviscosity_p_order = 4
+        parser.add_argument('--const-hyperviscosity-p-order', dest="const_hyperviscosity_p_order", type=int, help="Hyperviscosity order on pressure p")
+
+        self.const_hyperviscosity_rho = float(0)
+        parser.add_argument('--const-hyperviscosity-rho', dest="const_hyperviscosity_rho", type=float, help="Hyperviscosity on density rho")
+
+        self.const_hyperviscosity_rho_order = 4
+        parser.add_argument('--const-hyperviscosity-rho-order', dest="const_hyperviscosity_rho_order", type=int, help="Hyperviscosity order on density rho")
+                
+        self.const_hyperviscosity_t = float(0)
+        parser.add_argument('--const-hyperviscosity-t', dest="const_hyperviscosity_t", type=float, help="Hyperviscosity on (real) temperature t")
+
+        self.const_hyperviscosity_t_order = 4
+        parser.add_argument('--const-hyperviscosity-t-order', dest="const_hyperviscosity_t_order", type=int, help="Hyperviscosity order on (real) temperature t")
+
+        # Special variable. If this is set, this will override all other variables
+        self.const_hyperviscosity_all = None
+        parser.add_argument('--const-hyperviscosity-all', dest="const_hyperviscosity_all", type=float, help="Hyperviscosity on all variables")
+
+        self.const_hyperviscosity_all_order = None
+        parser.add_argument('--const-hyperviscosity-all-order', dest="const_hyperviscosity_all_order", type=int, help="Hyperviscosity order on all variables")
+        
+        
+        """
+        Scaling of time step size
+        """
         
         self.dt_scaling = float(0.5)
         parser.add_argument('--dt-scaling', dest="dt_scaling", type=float, help="Scaling of time step size")
@@ -116,7 +170,6 @@ class SimConfig:
 
         self.ns_type = "nonlinear_a_grid__p_rho"
         parser.add_argument('--ns-type', dest="ns_type", type=str, help="Type of Navier Stokes equation\n"+o)
-        
         
         """
         Minimum order of spatial approximation
@@ -317,6 +370,34 @@ class SimConfig:
         p = rho * T * R
         """        
         self.kappa = self.const_R / self.const_c_p
+        
+        
+        """
+        Override viscosity if _all is set
+        """
+        if self.const_viscosity_all != None:
+            self.const_viscosity_vel = self.const_viscosity_all
+            self.const_viscosity_p = self.const_viscosity_all
+            self.const_viscosity_rho = self.const_viscosity_all
+            self.const_viscosity_t = self.const_viscosity_all
+        
+        
+        """
+        Override hyper viscosity if _all is set
+        """
+        if self.const_hyperviscosity_all != None:
+            self.const_hyperviscosity_vel = self.const_hyperviscosity_all
+            self.const_hyperviscosity_p = self.const_hyperviscosity_all
+            self.const_hyperviscosity_rho = self.const_hyperviscosity_all
+            self.const_hyperviscosity_t = self.const_hyperviscosity_all
+        
+        
+        if self.const_hyperviscosity_all_order != None:
+            self.const_hyperviscosity_vel_order = self.const_hyperviscosity_all_order
+            self.const_hyperviscosity_p_order = self.const_hyperviscosity_all_order
+            self.const_hyperviscosity_rho_order = self.const_hyperviscosity_all_order
+            self.const_hyperviscosity_t_order = self.const_hyperviscosity_all_order
+        
     
     
     def compute_p0_ideal_gas(self):
@@ -338,8 +419,22 @@ class SimConfig:
         print(" + const_c_p: "+str(self.const_c_p))
         print(" + kappa: "+str(self.kappa))
         print(" + const_g: "+str(self.const_g))
-        print(" + const_viscosity: "+str(self.const_viscosity))
-        print(" + const_viscosity_order: "+str(self.const_viscosity_order))
+        
+        print(" + const_viscosity_vel: "+str(self.const_viscosity_vel))
+        print(" + const_viscosity_p: "+str(self.const_viscosity_p))
+        print(" + const_viscosity_rho: "+str(self.const_viscosity_rho))
+        print(" + const_viscosity_t: "+str(self.const_viscosity_t))
+        
+        print(" + const_hyperviscosity_vel: "+str(self.const_hyperviscosity_vel))
+        print(" + const_hyperviscosity_p: "+str(self.const_hyperviscosity_p))
+        print(" + const_hyperviscosity_rho: "+str(self.const_hyperviscosity_rho))
+        print(" + const_hyperviscosity_t: "+str(self.const_hyperviscosity_t))
+
+        print(" + const_hyperviscosity_vel_order: "+str(self.const_hyperviscosity_vel_order))
+        print(" + const_hyperviscosity_p_order: "+str(self.const_hyperviscosity_p_order))
+        print(" + const_hyperviscosity_rho_order: "+str(self.const_hyperviscosity_rho_order))
+        print(" + const_hyperviscosity_t_order: "+str(self.const_hyperviscosity_t_order))
+
         print(" + dt_scaling: "+str(self.dt_scaling))
         print(" + vis_variable: "+str(self.vis_variable))
         print(" + ns_type: "+str(self.ns_type))
@@ -494,42 +589,49 @@ class SimPDE_Base:
         self._grid_info_info_nd_list = [self.u_grid, self.w_grid, self.p_grid, self.rho_grid, self.t_grid, self.pot_t_grid]
         self.grid_info_nd_set = libpdefd.GridInfoNDSet(self._grid_info_info_nd_list)
         
+
+        def gen_visc_term(grid, diff_order=2):
+            """
+            Setup Viscosity operators which are the same across all discretizations
+            """
+            retval = libpdefd.OperatorDiffND(
+                    diff_dim = 0,
+                    diff_order = diff_order,
+                    min_approx_order = self.simconfig.min_spatial_approx_order,
+                    src_grid = grid,
+                    dst_grid = grid,
+                )
+            
+            retval += libpdefd.OperatorDiffND(
+                    diff_dim = 1,
+                    diff_order = diff_order,
+                    min_approx_order = self.simconfig.min_spatial_approx_order,
+                    src_grid = grid,
+                    dst_grid = grid,
+                )
+            
+            return retval
+        
         
         """
         Setup Viscosity operators which are the same across all discretizations
         """
-        self.op_u__laplace_u_to_u = libpdefd.OperatorDiffND(
-                diff_dim = 0,
-                diff_order = self.simconfig.const_viscosity_order,
-                min_approx_order = self.simconfig.min_spatial_approx_order,
-                src_grid = self.u_grid,
-                dst_grid = self.u_grid,
-            )
-        self.op_u__laplace_u_to_u += libpdefd.OperatorDiffND(
-                diff_dim = 1,
-                diff_order = self.simconfig.const_viscosity_order,
-                min_approx_order = self.simconfig.min_spatial_approx_order,
-                src_grid = self.u_grid,
-                dst_grid = self.u_grid,
-            )
+        self.op_u__laplace_u_to_u = gen_visc_term(self.u_grid)
+        self.op_w__laplace_w_to_w = gen_visc_term(self.w_grid)
+        
+        self.op_p__laplace_p_to_p = gen_visc_term(self.p_grid)
+        self.op_rho__laplace_rho_to_rho = gen_visc_term(self.rho_grid)
+        self.op_t__laplace_t_to_t = gen_visc_term(self.t_grid)
         
         
         
-        self.op_w__laplace_w_to_w = libpdefd.OperatorDiffND(
-                diff_dim = 0,
-                diff_order = self.simconfig.const_viscosity_order,
-                min_approx_order = self.simconfig.min_spatial_approx_order,
-                src_grid = self.w_grid,
-                dst_grid = self.w_grid,
-            )
-        self.op_w__laplace_w_to_w += libpdefd.OperatorDiffND(
-                diff_dim = 1,
-                diff_order = self.simconfig.const_viscosity_order,
-                min_approx_order = self.simconfig.min_spatial_approx_order,
-                src_grid = self.w_grid,
-                dst_grid = self.w_grid,
-            )
-                
+        self.op_u__hyperviscosity_u_to_u = gen_visc_term(self.u_grid, self.simconfig.const_hyperviscosity_vel_order)
+        self.op_w__hyperviscosity_w_to_w = gen_visc_term(self.w_grid, self.simconfig.const_hyperviscosity_vel_order)
+        
+        self.op_p__hyperviscosity_p_to_p = gen_visc_term(self.p_grid, self.simconfig.const_hyperviscosity_p_order)
+        self.op_rho__hyperviscosity_rho_to_rho = gen_visc_term(self.rho_grid, self.simconfig.const_hyperviscosity_rho_order)
+        self.op_t__hyperviscosity_t_to_t = gen_visc_term(self.t_grid, self.simconfig.const_hyperviscosity_t_order)
+        
         
         self.alpha = 1.0/(self.simconfig.kappa - 1.0)
         self.beta = self.simconfig.kappa/(self.simconfig.kappa - 1.0)
@@ -897,10 +999,33 @@ class SimPDE_NSNonlinearA__p_rho(SimPDE_Base):
         self.dp_dt =    -u_ * self.op_p__grad_dp_dx(p)         \
                         -w_ * self.op_p__grad_dp_dz(p)         \
                         + self.alpha * p * ( self.op_p__div_du_dx(u) + self.op_p__div_dw_dz(w))
+
+        """
+        Viscosity
+        """
+        if self.simconfig.const_viscosity_vel != 0:
+            self.du_dt += self.simconfig.const_viscosity_vel*self.op_u__laplace_u_to_u(u)
+            self.dw_dt += self.simconfig.const_viscosity_vel*self.op_w__laplace_w_to_w(w)
         
-        if self.simconfig.const_viscosity != 0:
-            self.du_dt += self.simconfig.const_viscosity*self.op_u__laplace_u_to_u(u)
-            self.dw_dt += self.simconfig.const_viscosity*self.op_w__laplace_w_to_w(w)
+        if self.simconfig.const_viscosity_p != 0:
+            self.dp_dt += self.simconfig.const_viscosity_p*self.op_p__laplace_p_to_p(p)
+        
+        if self.simconfig.const_viscosity_rho != 0:
+            self.drho_dt += self.simconfig.const_viscosity_rho*self.op_rho__laplace_rho_to_rho(rho)
+
+
+        """
+        Hyperhyperviscosity
+        """        
+        if self.simconfig.const_hyperviscosity_vel != 0:
+            self.du_dt += self.simconfig.const_hyperviscosity_vel*self.op_u__hyperviscosity_u_to_u(u)
+            self.dw_dt += self.simconfig.const_hyperviscosity_vel*self.op_w__hyperviscosity_w_to_w(w)
+        
+        if self.simconfig.const_hyperviscosity_p != 0:
+            self.dp_dt += self.simconfig.const_hyperviscosity_p*self.op_p__hyperviscosity_p_to_p(p)
+        
+        if self.simconfig.const_hyperviscosity_rho != 0:
+            self.drho_dt += self.simconfig.const_hyperviscosity_rho*self.op_rho__hyperviscosity_rho_to_rho(rho)
         
         retval = libpdefd.VariableNDSet_Empty_Like(Uset)
         
@@ -1217,9 +1342,33 @@ class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
                         - w_ * self.op_t__grad_dt_dz(t)         \
                         + self.beta * t * (self.op_t__div_du_dx(u) + self.op_t__div_dw_dz(w))
         
-        if self.simconfig.const_viscosity != 0:
-            self.du_dt += self.simconfig.const_viscosity*self.op_u__laplace_u_to_u(u)
-            self.dw_dt += self.simconfig.const_viscosity*self.op_w__laplace_w_to_w(w)
+        """
+        Viscosity
+        """
+        if self.simconfig.const_viscosity_vel != 0:
+            self.du_dt += self.simconfig.const_viscosity_vel*self.op_u__laplace_u_to_u(u)
+            self.dw_dt += self.simconfig.const_viscosity_vel*self.op_w__laplace_w_to_w(w)
+        
+        if self.simconfig.const_viscosity_p != 0:
+            self.dp_dt += self.simconfig.const_viscosity_p*self.op_p__laplace_p_to_p(p)
+        
+        if self.simconfig.const_viscosity_t != 0:
+            self.dt_dt += self.simconfig.const_viscosity_t*self.op_t__laplace_t_to_t(t)
+        
+        """
+        Hyperviscosity
+        """
+        if self.simconfig.const_hyperviscosity_vel != 0:
+            self.du_dt += self.simconfig.const_hyperviscosity_vel*self.op_u__hyperviscosity_u_to_u(u)
+            self.dw_dt += self.simconfig.const_hyperviscosity_vel*self.op_w__hyperviscosity_w_to_w(w)
+        
+        if self.simconfig.const_hyperviscosity_p != 0:
+            self.dp_dt += self.simconfig.const_hyperviscosity_p*self.op_p__hyperviscosity_p_to_p(p)
+        
+        if self.simconfig.const_hyperviscosity_t != 0:
+            self.dt_dt += self.simconfig.const_hyperviscosity_t*self.op_t__hyperviscosity_t_to_t(t)
+        
+        
         
         retval = libpdefd.VariableNDSet_Empty_Like(Uset)
         
@@ -1522,10 +1671,36 @@ class SimPDE_NSNonlinearA__rho_t(SimPDE_Base):
                         - w_ * self.op_t__grad_dt_dz(t)         \
                         + self.beta * t * (self.op_t__div_du_dx(u) + self.op_t__div_dw_dz(w))
         
-        if self.simconfig.const_viscosity != 0:
-            self.du_dt += self.simconfig.const_viscosity*self.op_u__laplace_u_to_u(u)
-            self.dw_dt += self.simconfig.const_viscosity*self.op_w__laplace_w_to_w(w)
         
+        """
+        Viscosity
+        """
+        if self.simconfig.const_viscosity_vel != 0:
+            self.du_dt += self.simconfig.const_viscosity_vel*self.op_u__laplace_u_to_u(u)
+            self.dw_dt += self.simconfig.const_viscosity_vel*self.op_w__laplace_w_to_w(w)
+        
+        if self.simconfig.const_viscosity_rho != 0:
+            self.drho_dt += self.simconfig.const_viscosity_rho*self.op_rho__laplace_rho_to_rho(rho)
+        
+        if self.simconfig.const_viscosity_t != 0:
+            self.dt_dt += self.simconfig.const_viscosity_t*self.op_t__laplace_t_to_t(t)
+        
+        
+        """
+        Hyperviscosity
+        """
+        if self.simconfig.const_hyperviscosity_vel != 0:
+            self.du_dt += self.simconfig.const_hyperviscosity_vel*self.op_u__hyperviscosity_u_to_u(u)
+            self.dw_dt += self.simconfig.const_hyperviscosity_vel*self.op_w__hyperviscosity_w_to_w(w)
+        
+        if self.simconfig.const_hyperviscosity_rho != 0:
+            self.drho_dt += self.simconfig.const_hyperviscosity_rho*self.op_rho__hyperviscosity_rho_to_rho(rho)
+        
+        if self.simconfig.const_hyperviscosity_t != 0:
+            self.dt_dt += self.simconfig.const_hyperviscosity_t*self.op_t__hyperviscosity_t_to_t(t)
+        
+
+
         retval = libpdefd.VariableNDSet_Empty_Like(Uset)
         
         retval[0] = self.du_dt
