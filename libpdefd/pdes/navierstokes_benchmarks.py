@@ -418,7 +418,7 @@ class Benchmarks:
                 variable_set_all['t'].set(fun_t_from_p_rho(t_mesh_data, variable_set_all['p'], variable_set_all['rho']))
                 
 
-        elif simconfig.benchmark_name in ["vertical_straka", "vertical_straka_symmetric", "vertical_straka_symmetric_nobump"]:
+        elif simconfig.benchmark_name.startswith("vertical_straka"):
             
             def fun_straka_t(mesh_data):
                 z_coords = mesh_data[:,:,1]
