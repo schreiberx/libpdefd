@@ -6,7 +6,7 @@ source python_config.sh
 # Setup virtual environment
 #
 echo "Setting up virtual environment in '$VENV_DIR'"
-#./install_anaconda.sh || exit 1
+./install_anaconda.sh || exit 1
 #python3 -m venv "$VENV_DIR" || exit 1
 
 echo "Activating environment"
