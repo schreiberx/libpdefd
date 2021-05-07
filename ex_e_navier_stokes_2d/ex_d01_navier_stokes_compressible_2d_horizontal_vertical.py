@@ -226,10 +226,6 @@ if plot_generate:
         vis.show(block=False)
 
 
-
-import time
-time_start = time.time()
-
 if simconfig.sim_time != None:
     num_total_timesteps = int(simconfig.sim_time/dt)
 else:
@@ -247,6 +243,9 @@ simtime = 0
 U_leapfrog_prev = None
 
 
+import time
+time_start = time.time()
+
 while True:
     
     if simconfig.output_text_freq > 0:
@@ -255,6 +254,12 @@ while True:
             if simconfig.verbosity >= 1:
                 print("timestep: "+str(num_timestep))
                 print(" + simtime: "+str(simtime))
+                
+                time_current = time.time()
+                
+                if num_timestep != 0:
+                    seconds_per_timestep = (time_current - time_start)/num_timestep
+                    print(" + seconds_per_timestep: "+str(seconds_per_timestep))
             
             if simconfig.verbosity >= 2:
                 for varname in ['u', 'w', 'p', 'rho', 't']:
@@ -314,6 +319,9 @@ while True:
 
 time_end = time.time()
 print("Time: "+str(time_end-time_start))
+
+total_seconds_per_timestep = (time_end - time_start)/num_timestep
+print(" + total_seconds_per_timestep: "+str(seconds_per_timestep))
 
 if simconfig.gui:
     do_gui_plots(num_timestep, True)

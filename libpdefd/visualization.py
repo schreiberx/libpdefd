@@ -116,7 +116,8 @@ class Visualization2DMesh(_VisualizationBase):
         vis_dim_y = 1,
         vis_slice : list = [],
         rescale = 1,
-        use_symlog = False
+        use_symlog = False,
+        figscale = None
     ):
         """
         Prepare plotting
@@ -126,10 +127,11 @@ class Visualization2DMesh(_VisualizationBase):
         self.vis_slice = vis_slice
         self.rescale = rescale
         self.use_symlog = use_symlog
+        self.figscale = figscale
         
         self.firsttime = True
         
-        self.fig, self.ax = pc.setup()
+        self.fig, self.ax = pc.setup(scale=figscale)
         self.ps = pc.PlotStyles()
         
         """
@@ -292,7 +294,7 @@ class Visualization2DMesh(_VisualizationBase):
                 for c in self.contour.collections: 
                     c.remove()
             
-            self.contour = self.ax.contour(X, Y, dim_reduced_data, levels=contour_levels, colors='black', linewidths=0.5)
+            self.contour = self.ax.contour(X, Y, dim_reduced_data, levels=contour_levels, colors='black', linewidths=0.25)
             #self.ax.clabel(self.contour, inline=True, fontsize=3, colors="black")
     
     
