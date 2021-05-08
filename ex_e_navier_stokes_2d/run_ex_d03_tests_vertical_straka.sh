@@ -11,14 +11,14 @@ NS_TYPE=nonlinear_a_grid__p_rho
 
 ARGS=""
 ARGS+=" -v 10"
-ARGS+=" --sim-time=300"
+ARGS+=" --sim-time=900"
 ARGS+=" --time-integrator $TIME_INTEGRATOR"
 ARGS+=" --dt-scaling=0.001"
 ARGS+=" --min-spatial-approx-order=4"
 ARGS+=" --ns-type=$NS_TYPE"
 ARGS+=" --benchmark-name=$BENCHMARK_NAME"
 #ARGS+=" --cell-res 1024 1024"
-ARGS+=" --cell-res 128 128"
+ARGS+=" --cell-res 256 64"
 
 ARGS+=" --output-text-freq=10"
 ARGS+=" --output-plot-simtime-interval=0.1"
