@@ -12,7 +12,7 @@ import sys
 class Benchmarks:
     
     D = 2
-
+    
     def g_fun(self, mesh_data):
         y_coords = mesh_data[:,:,1]
         f = interp1d(atmos_consts.altitude, atmos_consts.gravity, kind='cubic')
@@ -138,15 +138,14 @@ class Benchmarks:
             simconfig.boundary_conditions_rho_t = [ [libpdefd.BoundaryPeriodic() for _ in range(2)],
                                                 [libpdefd.BoundarySymmetric(), libpdefd.BoundarySymmetric()],
                                             ]
-            
-            
+    
     
     def setup_simconfig(
         self,
         simconfig
     ):
         if simconfig.benchmark_name == None:
-            print("Please specify benchmark to use!")
+            raise Exception("Please specify benchmark to use!")
             sys.exit(1)
         
         if simconfig.benchmark_name in ["horizontal_bump"]:

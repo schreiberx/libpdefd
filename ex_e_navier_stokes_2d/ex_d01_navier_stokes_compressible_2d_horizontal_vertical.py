@@ -11,7 +11,8 @@ import libpdefd.pdes.navierstokes_benchmarks as pde_navierstokes_benchmarks
 """
 Configuration of simulation    
 """
-simconfig = pde_navierstokes.SimConfig()
+simconfig = pde_navierstokes.SimConfig(num_dims=2)
+simconfig.update()
 
 
 """

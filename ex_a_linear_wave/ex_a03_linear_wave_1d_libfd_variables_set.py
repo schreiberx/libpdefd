@@ -3,66 +3,12 @@
 import sys
 import numpy as np
 import libpdefd
+import argparse
 
 
-"""
-************************** OPTIONS START **************************
-"""
+import simconfig_a
+simconfig = simconfig_a.SimConfig()
 
-"""
-Resolution of simulation in number of cells
-"""
-cell_res = 512
-
-"""
-Use grid staggering
-"""
-use_staggering = True
-
-"""
-Domain start/end coordinate
-"""
-domain_start = 0
-domain_end = 320
-domain_size = domain_end - domain_start
-
-"""
-Boundary condition: 'periodic', 'dirichlet' or 'neumann'
-"""
-boundary_condition_u = "dirichlet0"
-boundary_condition_v = "dirichlet0"
-
-
-"""
-GridInfo1D layout: 'auto' or 'manual'
-"""
-grid_setup = "auto"
-
-"""
-Minimum order of spatial approximation
-"""
-min_spatial_approx_order = 2
-
-
-"""
-Use symlog for plot
-"""
-use_symlog = False
-if boundary_condition_u == "neumann0" or boundary_condition_v == "neumann0":
-    use_symlog = True
-
-
-"""
-************************** OPTIONS END   **************************
-"""
-
-
-"""
-Guess time step size
-"""
-
-dt = domain_size/(cell_res+1)
-dt *= 0.5
 
 
 """
@@ -80,8 +26,8 @@ def get_boundaries(boundary_condition):
         boundary_right = libpdefd.BoundaryDirichlet(0)
         
     elif boundary_condition == "neumann0":
-        boundary_left = libpdefd.BoundaryNeumannExtrapolated(0)
-        boundary_right = libpdefd.BoundaryNeumannExtrapolated(0)
+        boundary_left = libpdefd.BoundaryNeumannExtrapolated(neumann_value=0)
+        boundary_right = libpdefd.BoundaryNeumannExtrapolated(neumann_value=0)
         
     elif boundary_condition == "symmetric":
         boundary_left = libpdefd.BoundarySymmetric()
@@ -93,26 +39,28 @@ def get_boundaries(boundary_condition):
     boundaries = [boundary_left, boundary_right]
     return boundaries
 
-boundaries_u = get_boundaries(boundary_condition_u)
-boundaries_v = get_boundaries(boundary_condition_v)
+
+
+boundaries_rho = get_boundaries(simconfig.boundary_conditions_rho[0])
+boundaries_vel = get_boundaries(simconfig.boundary_conditions_vel[0])
 
 
 """
 Setup variables
 """
 
-rho_grid = libpdefd.GridInfo1D("u")
-vel_grid = libpdefd.GridInfo1D("v")
+rho_grid = libpdefd.GridInfo1D("rho")
+vel_grid = libpdefd.GridInfo1D("vel")
 
 """
 Setup grids for each variable
 """
-if grid_setup == "auto":
-    rho_grid.setup_autogrid(domain_start, domain_end, cell_res+1, boundaries=boundaries_u, staggered=False)
-    vel_grid.setup_autogrid(domain_start, domain_end, cell_res+1, boundaries=boundaries_v, staggered=use_staggering)
+if simconfig.grid_setup == "auto":
+    rho_grid.setup_autogrid(simconfig.domain_start[0], simconfig.domain_end[0], simconfig.cell_res[0]+1, boundaries=boundaries_rho, staggered=False)
+    vel_grid.setup_autogrid(simconfig.domain_start[0], simconfig.domain_end[0], simconfig.cell_res[0]+1, boundaries=boundaries_vel, staggered=simconfig.use_staggering)
 
-elif grid_setup == "manual":
-    if use_staggering:
+elif simconfig.grid_setup == "manual":
+    if simconfig.use_staggering:
         raise Exception("TODO: Implement this here, but it's supported in libpdefd")
 
     x = np.linspace(0, 1, cell_res+1, endpoint=True)
@@ -125,8 +73,8 @@ elif grid_setup == "manual":
     x *= domain_size
     x += domain_start
     
-    rho_grid.setup_manualgrid(x, boundaries=boundaries_u)
-    vel_grid.setup_manualgrid(x, boundaries=boundaries_v)
+    rho_grid.setup_manualgrid(x, boundaries=boundaries_rho)
+    vel_grid.setup_manualgrid(x, boundaries=boundaries_vel)
 
 else:
     raise Exception("GridInfo1D setup '"+grid_setup+"' not supported")
@@ -142,17 +90,17 @@ Setup differential operator
 """
 rho_diff = libpdefd.OperatorDiff1D(
     diff_order = 1,
-    min_approx_order = min_spatial_approx_order,
+    min_approx_order = simconfig.min_spatial_approx_order,
     dst_grid = vel_grid,
     src_grid = rho_grid,
-)
+).bake()
 
 vel_diff = libpdefd.OperatorDiff1D(
     diff_order = 1,
-    min_approx_order = min_spatial_approx_order,
+    min_approx_order = simconfig.min_spatial_approx_order,
     dst_grid = rho_grid,
     src_grid = vel_grid,
-)
+).bake()
 
 
 """
@@ -181,69 +129,46 @@ Setup initial conditions
 u = libpdefd.VariableND(rho_grid, "u")
 v = libpdefd.VariableND(vel_grid, "v")
 
-ic_center = 0.75*(domain_start + domain_end)
+ic_center = 0.75*(simconfig.domain_start + simconfig.domain_end)
 
 def initial_condition(x):
-    t = (x - ic_center)/domain_size
+    t = (x - ic_center)/simconfig.domain_size
     t = t**2
     return np.exp(-t*120)
 
-if boundary_condition_u == "periodic" or boundary_condition_v == "periodic":
+if simconfig.boundary_conditions_rho[0] == "periodic" or simconfig.boundary_conditions_vel[0] == "periodic":
     range_ = range(-10, 10+1)
 else:
     range_ = [0]
 
 for i in range_:
-    u += initial_condition(rho_grid.x_dofs + domain_size*i)
-"""
-u += libpdefd_tools.gaussian_bump(
-                rho_grid.x_dofs,
-                ic_center = ic_center*domain_size,
-                domain_size = domain_size,
-                boundary_condition = boundary_condition_u,
-                exp_parameter = 120.0
-            )
-"""
+    u += initial_condition(rho_grid.x_dofs + simconfig.domain_size*i)
+
 
 U = libpdefd.VariableNDSet([u,v])
 
 
-output_freq = 10
-if len(sys.argv) >= 2:
-    output_freq = int(sys.argv[1])
-    if output_freq < 0:
-        output_freq = None
-
-
-num_timesteps = 10000
-if len(sys.argv) >= 3:
-    num_timesteps = int(sys.argv[2])
-    if num_timesteps < 0:
-        num_timesteps = None
-
-
-if output_freq != None:
+if simconfig.output_freq != None:
     """
     Prepare plotting
     """
     
     import matplotlib.pyplot as plt
-    
     import libpdefd.plot_config as pc
     fig, ax = pc.setup()
-
+    
     ps = pc.PlotStyles()
     
     plotstyle = ps.getNextStyle(len(rho_grid.x_dofs), 15)
-    line_u, = ax.plot(rho_grid.x_dofs, U[0].to_numpy_array(), **plotstyle, label="u(x)")
+    line_rho, = ax.plot(rho_grid.x_dofs, U[0].to_numpy_array(), **plotstyle, label="u(x)")
     
     plotstyle = ps.getNextStyle(len(vel_grid.x_dofs), 15)
-    line_v, = ax.plot(vel_grid.x_dofs, U[1].to_numpy_array(), **plotstyle, label="v(x)")
+    line_vel, = ax.plot(vel_grid.x_dofs, U[1].to_numpy_array(), **plotstyle, label="v(x)")
     
     ax.legend()
     maxy = U[0].reduce_maxabs()
     ax.set_ylim(-maxy, maxy)
-    if use_symlog:
+    if simconfig.use_symlog:
         ax.set_yscale("symlog", linthresh=1e-4)
     
     plt.show(block=False)
@@ -252,14 +177,15 @@ if output_freq != None:
 import time
 time_start = time.time()
 
-for i in range(num_timesteps):
-    
-    U = libpdefd.tools.RK4(dU_dt, U, dt)
 
-    if output_freq != None:
-        if i % output_freq == 0:
-            line_u.set_ydata(U[0].to_numpy_array())
-            line_v.set_ydata(U[1].to_numpy_array())
+for i in range(simconfig.num_timesteps):
+    
+    U = libpdefd.tools.RK4(dU_dt, U, simconfig.dt)
+
+    if simconfig.output_freq != None:
+        if i % simconfig.output_freq == 0:
+            line_rho.set_ydata(U[0].to_numpy_array())
+            line_vel.set_ydata(U[1].to_numpy_array())
             
             ax.set_title("timestep "+str(i))
             
@@ -271,5 +197,5 @@ time_end = time.time()
 
 print("Time: "+str(time_end-time_start))
 
-if output_freq != None:
+if simconfig.output_freq != None and simconfig.test_run == False:
     plt.show()

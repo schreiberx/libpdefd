@@ -6,6 +6,7 @@ Shallow-Water Equation
 import sys
 import numpy as np
 import libpdefd
+import argparse
 
 
 
@@ -13,6 +14,8 @@ class SimConfig:
     def __init__(self):
         self.init_phase = True
 
+        parser = argparse.ArgumentParser()
+        
         """
         Setup default values
         """
@@ -116,11 +119,42 @@ class SimConfig:
 
         
         """
+        Output frequency of output
+        """
+        self.output_freq = 10
+        
+        
+        """
+        Number of time steps
+        """
+        self.num_timesteps = 10000
+        
+        
+        """
+        Test run
+        """
+        self.test_run = False
+        parser.add_argument('--test-run', dest="test_run", type=str, help="Test run")
+
+        """
+        Update class members with program parameters
+        """
+        args = parser.parse_args()
+        dict_args = vars(args)
+        for key in dict_args:
+            value = dict_args[key]
+            if value != None:
+                if isinstance(dict_args[key], list):
+                    value = np.array(value)
+
+                self.__setattr__(key, value)
+        
+
+        
+        """
         Activate variable guard to avoid setting variables which don't exist
         """     
         self.init_phase = False
-
-
 
     def __setattr__(self, name, value):
 
@@ -142,7 +176,26 @@ class SimConfig:
         if self.vis_slice == None:
             self.vis_slice  = [self.cell_res[i]//2 for i in range(2)]
 
+        libpdefd.core.operator.set_default_param('operator_diff__min_approx_order', self.min_spatial_approx_order)
 
+        def str2bool(v):
+            """
+            https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
+            """
+            if isinstance(v, bool):
+                return v
+            if v.lower() in ('yes', 'true', 't', 'y', '1'):
+                return True
+            elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+                return False
+            else:
+                raise argparse.ArgumentTypeError('Boolean value expected.')
+        
+        self.test_run = str2bool(self.test_run)
+        
+        if self.test_run:
+            self.num_timesteps = 10
+        
 
 """
 Differential operators
@@ -283,23 +336,22 @@ class SWEBase:
         self.op_visc_u = libpdefd.OperatorDiffND(
                 diff_dim = 0,
                 diff_order = self.simconfig.sim_visc_order,
-                min_approx_order = self.simconfig.min_spatial_approx_order,
-                src_grid = self.u_grid,
-                dst_grid = self.u_grid,
-            )
-            
-        self.op_visc_u += libpdefd.OperatorDiffND(
-                diff_dim = 1,
-                diff_order = self.simconfig.sim_visc_order,
-                min_approx_order = self.simconfig.min_spatial_approx_order,
                 src_grid = self.u_grid,
                 dst_grid = self.u_grid,
             )
         
+        self.op_visc_u += libpdefd.OperatorDiffND(
+                diff_dim = 1,
+                diff_order = self.simconfig.sim_visc_order,
+                src_grid = self.u_grid,
+                dst_grid = self.u_grid,
+            )
+        
+        self.op_visc_u.bake()
+        
         self.op_visc_v = libpdefd.OperatorDiffND(
                 diff_dim = 0,
                 diff_order = self.simconfig.sim_visc_order,
-                min_approx_order = self.simconfig.min_spatial_approx_order,
                 src_grid = self.v_grid,
                 dst_grid = self.v_grid,
             )
@@ -307,11 +359,11 @@ class SWEBase:
         self.op_visc_v += libpdefd.OperatorDiffND(
                 diff_dim = 1,
                 diff_order = self.simconfig.sim_visc_order,
-                min_approx_order = self.simconfig.min_spatial_approx_order,
                 src_grid = self.v_grid,
                 dst_grid = self.v_grid,
             )
         
+        self.op_visc_v.bake()
 
     def getGridInfoNDSet(self):
         return self.grid_info_nd_set
@@ -397,18 +449,16 @@ class SimPDE_SWELinearA(SWEBase):
         self.op_diff_du_dx_to_hpert = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.hpert_grid,
-        )
+        ).bake()
         
         self.op_diff_dv_dy_to_hpert = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.v_grid,
             dst_grid = self.hpert_grid,
-        )
+        ).bake()
         
         
         
@@ -420,10 +470,9 @@ class SimPDE_SWELinearA(SWEBase):
         self.op_diff_dhpert_dx_to_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.hpert_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         
         """
@@ -434,10 +483,9 @@ class SimPDE_SWELinearA(SWEBase):
         self.op_diff_dhpert_dy_to_v = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.hpert_grid,
             dst_grid = self.v_grid,
-        )
+        ).bake()
         
         
         """
@@ -446,18 +494,16 @@ class SimPDE_SWELinearA(SWEBase):
         self.op_vort_du_dy_to_q = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
         
         self.op_vort_dv_dx_to_q = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.v_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
 
 
     def dU_dt(self, U):
@@ -511,18 +557,16 @@ class SimPDE_SWELinearC(SWEBase):
         self.op_diff_du_dx_to_hpert = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.hpert_grid,
-        )
+        ).bake()
         
         self.op_diff_dv_dy_to_hpert = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.v_grid,
             dst_grid = self.hpert_grid,
-        )
+        ).bake()
         
         
         
@@ -535,26 +579,23 @@ class SimPDE_SWELinearC(SWEBase):
         self.op_diff_dhpert_dx_to_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.hpert_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         self.op_interpolate_v_to_q = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.v_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
         
         self.op_interpolate_q_to_u = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.q_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         
         
@@ -567,26 +608,23 @@ class SimPDE_SWELinearC(SWEBase):
         self.op_diff_dhpert_dy_to_v = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.hpert_grid,
             dst_grid = self.v_grid,
-        )
+        ).bake()
         
         self.op_interpolate_u_to_q = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
         
         self.op_interpolate_q_to_v = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.q_grid,
             dst_grid = self.v_grid,
-        )
+        ).bake()
         
         
         """
@@ -596,18 +634,16 @@ class SimPDE_SWELinearC(SWEBase):
         self.op_vort_du_dy_to_q = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
         
         self.op_vort_dv_dx_to_q = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.v_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
 
 
     def dU_dt(self, U):
@@ -675,17 +711,16 @@ class SimPDE_SWENonlinearA(SWEBase):
         self.op_diff_dv_dx_to_q = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.v_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
+        
         self.op_diff_du_dy_to_q = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
         
         """
         self.du_dt = self.op_interpolate_q_to_u(q*self.op_interpolate_v_to_q(V)) - self.op_diff_dH_dx_to_u(H)
@@ -693,10 +728,9 @@ class SimPDE_SWENonlinearA(SWEBase):
         self.op_diff_dH_dx_to_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.hpert_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         """
         self.dv_dt = -self.op_interpolate_q_to_v(q*self.op_interpolate_u_to_q(U)) - self.op_diff_dH_dy_to_v(H)
@@ -704,10 +738,9 @@ class SimPDE_SWENonlinearA(SWEBase):
         self.op_diff_dH_dy_to_v = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.hpert_grid,
             dst_grid = self.v_grid,
-        )
+        ).bake()
         
         """
         self.dhpert_dt = - self.op_diff_du_dx_to_hpert(U) - self.op_diff_dv_dy_to_hpert(V)
@@ -715,17 +748,15 @@ class SimPDE_SWENonlinearA(SWEBase):
         self.op_diff_du_dx_to_hpert = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.hpert_grid,
-        )
+        ).bake()
         self.op_diff_dv_dy_to_hpert = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.v_grid,
             dst_grid = self.hpert_grid,
-        )
+        ).bake()
         
         """
         Vorticity related visualization operators
@@ -733,18 +764,16 @@ class SimPDE_SWENonlinearA(SWEBase):
         self.op_vort_du_dy_to_q = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
         
         self.op_vort_dv_dx_to_q = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.v_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
 
     def dU_dt(self, Uset):
         hpert = Uset[0]
@@ -807,17 +836,15 @@ class SimPDE_SWENonlinearC(SWEBase):
         self.op_interpolate_hpert_to_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.hpert_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         self.op_interpolate_hpert_to_v = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.hpert_grid,
             dst_grid = self.v_grid,
-        )
+        ).bake()
         
         """
         H = total_h*self.simconfig.sim_g + (self.op_interpolate_u_to_hpert(u*u) + self.op_interpolate_v_to_hpert(v*v))*0.5
@@ -825,17 +852,15 @@ class SimPDE_SWENonlinearC(SWEBase):
         self.op_interpolate_u_to_hpert = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.hpert_grid,
-        )
+        ).bake()
         self.op_interpolate_v_to_hpert = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.v_grid,
             dst_grid = self.hpert_grid,
-        )
+        ).bake()
         
         """
         total_h_pv = self.op_interpolate_v_to_q(self.op_interpolate_h_to_v(total_h))
@@ -843,17 +868,15 @@ class SimPDE_SWENonlinearC(SWEBase):
         self.op_interpolate_h_to_v = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.hpert_grid,
             dst_grid = self.v_grid,
-        )
+        ).bake()
         self.op_interpolate_v_to_q = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.v_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
         
         """
         q = (self.op_diff_dv_dx_to_q(v) - self.op_diff_du_dy_to_q(u) + self.simvars.sim_f) / total_h_pv
@@ -861,17 +884,15 @@ class SimPDE_SWENonlinearC(SWEBase):
         self.op_diff_dv_dx_to_q = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.v_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
         self.op_diff_du_dy_to_q = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
         
         """
         self.du_dt = self.op_interpolate_q_to_u(q*self.op_interpolate_v_to_q(V)) - self.op_diff_dH_dx_to_u(H)
@@ -879,24 +900,21 @@ class SimPDE_SWENonlinearC(SWEBase):
         self.op_interpolate_v_to_q = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.v_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
         self.op_interpolate_q_to_u = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.q_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         self.op_diff_dH_dx_to_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.hpert_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         """
         self.dv_dt = -self.op_interpolate_q_to_v(q*self.op_interpolate_u_to_q(U)) - self.op_diff_dH_dy_to_v(H)
@@ -904,24 +922,21 @@ class SimPDE_SWENonlinearC(SWEBase):
         self.op_interpolate_u_to_q = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
         self.op_interpolate_q_to_v = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.q_grid,
             dst_grid = self.v_grid,
-        )
+        ).bake()
         self.op_diff_dH_dy_to_v = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.hpert_grid,
             dst_grid = self.v_grid,
-        )
+        ).bake()
         
         """
         self.dhpert_dt = - self.op_diff_du_dx_to_hpert(U) - self.op_diff_dv_dy_to_hpert(V)
@@ -929,17 +944,15 @@ class SimPDE_SWENonlinearC(SWEBase):
         self.op_diff_du_dx_to_hpert = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.hpert_grid,
-        )
+        ).bake()
         self.op_diff_dv_dy_to_hpert = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.v_grid,
             dst_grid = self.hpert_grid,
-        )
+        ).bake()
         
         """
         Vorticity related visualization operators
@@ -947,18 +960,16 @@ class SimPDE_SWENonlinearC(SWEBase):
         self.op_vort_du_dy_to_q = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
         
         self.op_vort_dv_dx_to_q = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.v_grid,
             dst_grid = self.q_grid,
-        )
+        ).bake()
 
 
     def dU_dt(self, Uset):

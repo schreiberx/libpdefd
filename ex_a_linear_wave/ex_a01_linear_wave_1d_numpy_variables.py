@@ -7,67 +7,8 @@ import libpdefd
 from libpdefd.array_matrix.libpdefd_array import *
 
 
-
-"""
-************************** OPTIONS START **************************
-"""
-
-"""
-Resolution of simulation in number of cells
-"""
-cell_res = 512
-
-"""
-Use grid staggering
-"""
-use_staggering = True
-
-"""
-Domain start/end coordinate
-"""
-domain_start = 0
-domain_end = 320
-domain_size = domain_end - domain_start
-
-"""
-Boundary condition: 'periodic', 'dirichlet0' or 'neumann0', 'symmetric'
-"""
-boundary_condition_rho = "symmetric"
-boundary_condition_vel = "dirichlet0"
-
-
-"""
-GridInfo1D layout: 'auto' or 'manual'
-"""
-grid_setup = "auto"
-
-"""
-Minimum order of spatial approximation
-"""
-min_spatial_approx_order = 2
-
-
-"""
-Use symlog for plot
-"""
-use_symlog = False
-if boundary_condition_rho == "neumann0" or boundary_condition_vel == "neumann0":
-    use_symlog = True
-    use_symlog = False
-
-
-"""
-************************** OPTIONS END   **************************
-"""
-
-
-"""
-Guess time step size
-"""
-
-dt = domain_size/(cell_res+1)
-dt *= 0.5
-
+import simconfig_a
+simconfig = simconfig_a.SimConfig()
 
 """
 Setup boundaries
@@ -97,8 +38,10 @@ def get_boundaries(boundary_condition):
     boundaries = [boundary_left, boundary_right]
     return boundaries
 
-boundaries_rho = get_boundaries(boundary_condition_rho)
-boundaries_vel = get_boundaries(boundary_condition_vel)
+
+
+boundaries_rho = get_boundaries(simconfig.boundary_conditions_rho[0])
+boundaries_vel = get_boundaries(simconfig.boundary_conditions_vel[0])
 
 
 """
@@ -111,9 +54,9 @@ vel_grid = libpdefd.GridInfo1D("vel")
 """
 Setup grids for each variable
 """
-if grid_setup == "auto":
-    rho_grid.setup_autogrid(domain_start, domain_end, cell_res+1, boundaries=boundaries_rho, staggered=False)
-    vel_grid.setup_autogrid(domain_start, domain_end, cell_res+1, boundaries=boundaries_vel, staggered=use_staggering)
+if simconfig.grid_setup == "auto":
+    rho_grid.setup_autogrid(simconfig.domain_start[0], simconfig.domain_end[0], simconfig.cell_res[0]+1, boundaries=boundaries_rho, staggered=False)
+    vel_grid.setup_autogrid(simconfig.domain_start[0], simconfig.domain_end[0], simconfig.cell_res[0]+1, boundaries=boundaries_vel, staggered=simconfig.use_staggering)
 
 elif grid_setup == "manual":
     if use_staggering:
@@ -150,17 +93,17 @@ Setup differential operator
 """
 rho_diff = libpdefd.OperatorDiff1D(
     diff_order = 1,
-    min_approx_order = min_spatial_approx_order,
+    min_approx_order = simconfig.min_spatial_approx_order,
     src_grid = rho_grid,
     dst_grid = vel_grid,
-)
+).bake()
 
 vel_diff = libpdefd.OperatorDiff1D(
     diff_order = 1,
-    min_approx_order = min_spatial_approx_order,
+    min_approx_order = simconfig.min_spatial_approx_order,
     src_grid = vel_grid,
     dst_grid = rho_grid,
-)
+).bake()
 
 
 
@@ -206,20 +149,20 @@ Setup initial conditions
 rho = array_zeros_like(rho_grid.x_dofs)
 vel = array_zeros_like(vel_grid.x_dofs)
 
-ic_center = 0.75*(domain_start + domain_end)
+ic_center = 0.75*(simconfig.domain_start + simconfig.domain_end)
 
 def initial_condition(x):
-    t = (x - ic_center)/domain_size
+    t = (x - ic_center)/simconfig.domain_size
     t = t**2
     return np.exp(-t*120)
 
-if boundary_condition_rho == "periodic" or boundary_condition_vel == "periodic":
+if simconfig.boundary_conditions_rho[0] == "periodic" or simconfig.boundary_conditions_vel[0] == "periodic":
     range_ = range(-10, 10+1)
 else:
     range_ = [0]
 
 for i in range_:
-    rho[:] += initial_condition(rho_grid.x_dofs + domain_size*i)
+    rho[:] += initial_condition(rho_grid.x_dofs + simconfig.domain_size*i)
 
 U = [rho, vel]
 
@@ -233,22 +176,7 @@ def U_add(a, b):
 
 
 
-output_freq = 10
-if len(sys.argv) >= 2:
-    output_freq = int(sys.argv[1])
-    if output_freq < 0:
-        output_freq = None
-
-
-num_timesteps = 10000
-if len(sys.argv) >= 3:
-    num_timesteps = int(sys.argv[2])
-    if num_timesteps < 0:
-        num_timesteps = None
-
-
-
-if output_freq != None:
+if simconfig.output_freq != None:
     """
     Prepare plotting
     """
@@ -268,7 +196,7 @@ if output_freq != None:
     ax.legend()
     maxy = U[0].reduce_maxabs()
     ax.set_ylim(-maxy, maxy)
-    if use_symlog:
+    if simconfig.use_symlog:
         ax.set_yscale("symlog", linthresh=1e-4)
     
     plt.show(block=False)
@@ -279,12 +207,12 @@ import time
 time_start = time.time()
 
 
-for i in range(num_timesteps):
+for i in range(simconfig.num_timesteps):
     
-    U = RK4(dU_dt, U, dt)
+    U = RK4(dU_dt, U, simconfig.dt)
 
-    if output_freq != None:
-        if i % output_freq == 0:
+    if simconfig.output_freq != None:
+        if i % simconfig.output_freq == 0:
             line_rho.set_ydata(U[0].to_numpy_array())
             line_vel.set_ydata(U[1].to_numpy_array())
             
@@ -293,10 +221,10 @@ for i in range(num_timesteps):
             fig.canvas.draw()
             fig.canvas.flush_events()
 
-
 time_end = time.time()
 
 print("Time: "+str(time_end-time_start))
 
-if output_freq != None:
+
+if simconfig.output_freq != None and simconfig.test_run == False:
     plt.show()

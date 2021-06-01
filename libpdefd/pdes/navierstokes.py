@@ -11,7 +11,7 @@ import argparse
 
 
 class SimConfig:
-    def __init__(self):
+    def __init__(self, num_dims):
         
         parser = argparse.ArgumentParser()
         
@@ -29,6 +29,8 @@ class SimConfig:
                 raise argparse.ArgumentTypeError('Boolean value expected.')
         
         self.init_phase = True
+        
+        self.num_dims = num_dims
         
         """
         Setup default values at 0 meter altitude
@@ -181,7 +183,7 @@ class SimConfig:
         Resolution of simulation in number of cells
         """
         base_res = 128
-        self.cell_res = np.array([base_res for _ in range(2)])
+        self.cell_res = np.array([base_res for _ in range(num_dims)])
         parser.add_argument('--cell-res', '-X', dest="cell_res", nargs="+", type=int, help="Resolution in each dimension (values separated by space)")
         
         
@@ -189,15 +191,15 @@ class SimConfig:
         """
         Center of initial condition (relative to domain)
         """
-        self.initial_condition_default_center = [0.25 for _ in range(2)]
+        self.initial_condition_default_center = [0.25 for _ in range(num_dims)]
         parser.add_argument('--initial-condition-default-center', dest="initial_condition_default_center", nargs="+", type=float, help="Center of initial condition (values separated by space)")
         
         
         """
         Domain start/end coordinate
         """
-        self.domain_start = np.array([0 for _ in range(2)])
-        self.domain_end = np.array([np.pi*2.0 for i in range(2)])
+        self.domain_start = np.array([0 for _ in range(num_dims)])
+        self.domain_end = np.array([np.pi*2.0 for i in range(num_dims)])
         parser.add_argument('--domain-start', dest="domain_start", nargs="+", type=float, help="Start coordinate of domain (values separated by space)")
         parser.add_argument('--domain-end', dest="domain_end", nargs="+", type=float, help="End coordinate of domain (values separated by space)")
         
@@ -206,15 +208,15 @@ class SimConfig:
         """
         Boundary condition: 'periodic', 'dirichlet' or 'neumann'
         """
-        self.boundary_conditions_rho = [["periodic" for _ in range(2)] for _i in range(2)]
-        self.boundary_conditions_u = [["periodic" for _ in range(2)] for _i in range(2)]
-        self.boundary_conditions_w = [["periodic" for _ in range(2)] for _i in range(2)]
-        self.boundary_conditions_p = [["periodic" for _ in range(2)] for _i in range(2)]
-        self.boundary_conditions_t = [["periodic" for _ in range(2)] for _i in range(2)]
+        self.boundary_conditions_rho = [["periodic" for _ in range(2)] for _i in range(num_dims)]
+        self.boundary_conditions_u = [["periodic" for _ in range(2)] for _i in range(num_dims)]
+        self.boundary_conditions_w = [["periodic" for _ in range(2)] for _i in range(num_dims)]
+        self.boundary_conditions_p = [["periodic" for _ in range(2)] for _i in range(num_dims)]
+        self.boundary_conditions_t = [["periodic" for _ in range(2)] for _i in range(num_dims)]
 
-        self.boundary_conditions_rho_u = [["periodic" for _ in range(2)] for _i in range(2)]
-        self.boundary_conditions_rho_w = [["periodic" for _ in range(2)] for _i in range(2)]
-        self.boundary_conditions_rho_t = [["periodic" for _ in range(2)] for _i in range(2)]
+        self.boundary_conditions_rho_u = [["periodic" for _ in range(2)] for _i in range(num_dims)]
+        self.boundary_conditions_rho_w = [["periodic" for _ in range(2)] for _i in range(num_dims)]
+        self.boundary_conditions_rho_t = [["periodic" for _ in range(2)] for _i in range(num_dims)]
         
         """
         Grid setup: 'auto' or 'manual'
@@ -320,9 +322,21 @@ class SimConfig:
         self.gravity_field = None
         
         """
-        Activate variable guard to avoid setting variables which don't exist
-        """    
-        self.init_phase = False
+        Output frequency of output
+        """
+        self.output_freq = 10
+        
+        
+        """
+        Number of time steps
+        """
+        self.num_timesteps = 10000
+
+        """
+        Test run
+        """
+        self.test_run = False
+        parser.add_argument('--test-run', dest="test_run", type=str, help="Test run")
         
         """
         Update class members with program parameters
@@ -336,6 +350,14 @@ class SimConfig:
                     value = np.array(value)
 
                 self.__setattr__(key, value)
+        
+        
+        
+        """
+        Activate variable guard to avoid setting variables which don't exist
+        """    
+        self.init_phase = False
+        
         
         self.update()
 
@@ -356,7 +378,7 @@ class SimConfig:
         """
         Slice to extract if the dimension is not visualized
         """
-        self.vis_slice  = [self.cell_res[i]//2 for i in range(2)]
+        self.vis_slice  = [self.cell_res[i]//2 for i in range(self.num_dims)]
         
         
         """
@@ -368,8 +390,9 @@ class SimConfig:
         Some constants
         
         p = rho * T * R
-        """        
-        self.kappa = self.const_R / self.const_c_p
+        """
+        self.kappa = self.const_c_p / self.const_R
+        #self.kappa = self.const_R / self.const_c_p
         
         
         """
@@ -398,7 +421,28 @@ class SimConfig:
             self.const_hyperviscosity_rho_order = self.const_hyperviscosity_all_order
             self.const_hyperviscosity_t_order = self.const_hyperviscosity_all_order
         
+        libpdefd.core.operator.set_default_param('operator_diff__min_approx_order', self.min_spatial_approx_order)
     
+        def str2bool(v):
+            """
+            https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
+            """
+            if isinstance(v, bool):
+                return v
+            if v.lower() in ('yes', 'true', 't', 'y', '1'):
+                return True
+            elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+                return False
+            else:
+                raise argparse.ArgumentTypeError('Boolean value expected.')
+        
+        self.test_run = str2bool(self.test_run)
+        
+        if self.test_run:
+            self.num_timesteps = 10
+            
+            self.benchmark_name = "vertical_straka"
+        
     
     def compute_p0_ideal_gas(self):
         self.const_p0 = self.const_rho0 * self.const_t0 * self.const_R
@@ -610,7 +654,7 @@ class SimPDE_Base:
                     dst_grid = grid,
                 )
             
-            return retval
+            return retval.bake()
         
         
         """
@@ -633,8 +677,9 @@ class SimPDE_Base:
         self.op_t__hyperviscosity_t_to_t = gen_visc_term(self.t_grid, self.simconfig.const_hyperviscosity_t_order)
         
         
-        self.alpha = 1.0/(self.simconfig.kappa - 1.0)
-        self.beta = self.simconfig.kappa/(self.simconfig.kappa - 1.0)
+        k = 1.0/self.simconfig.kappa
+        self.alpha = 1.0/(k - 1.0)
+        self.beta = k/(k - 1.0)
         self.R = self.simconfig.const_R
         
         
@@ -762,42 +807,37 @@ class SimPDE_NSNonlinearA__p_rho(SimPDE_Base):
         self.op_u__grad_du_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         self.op_u__grad_du_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         self.op_u__grad_dp_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.p_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         self.op_u__rho_to_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.rho_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         self.op_u__w_to_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         
         """
@@ -806,41 +846,36 @@ class SimPDE_NSNonlinearA__p_rho(SimPDE_Base):
         self.op_w__grad_dw_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         self.op_w__grad_dw_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         
         self.op_w__grad_dp_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.p_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         
         self.op_w__rho_to_w = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.rho_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         
         self.op_w__u_to_w = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         
         
         """
@@ -851,49 +886,43 @@ class SimPDE_NSNonlinearA__p_rho(SimPDE_Base):
         self.op_rho__div_drho_u_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.rho_u_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
         self.op_rho__div_drho_w_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.rho_w_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
         
         self.op_rho__u_to_rho_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.rho_u_grid,
-        )
+        ).bake()
         
         self.op_rho__rho_to_rho_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.rho_grid,
             dst_grid = self.rho_u_grid,
-        )
+        ).bake()
         
         self.op_rho__w_to_rho_w = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.rho_w_grid,
-        )
+        ).bake()
         
         self.op_rho__rho_to_rho_w = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.rho_grid,
             dst_grid = self.rho_w_grid,
-        )
+        ).bake()
         
         
         
@@ -905,48 +934,42 @@ class SimPDE_NSNonlinearA__p_rho(SimPDE_Base):
         self.op_p__grad_dp_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.p_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
         self.op_p__grad_dp_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.p_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
         
         self.op_p__div_du_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
         self.op_p__div_dw_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
         
         self.op_p__u_to_p = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
         
         self.op_p__w_to_p = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
     
     
     
@@ -1093,49 +1116,43 @@ class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
         self.op_u__grad_du_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         self.op_u__grad_du_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         self.op_u__grad_dp_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.p_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         self.op_u__w_to_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         self.op_u__p_to_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.p_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         self.op_u__t_to_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.t_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         
         """
@@ -1144,49 +1161,43 @@ class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
         self.op_w__grad_dw_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         self.op_w__grad_dw_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         
         self.op_w__grad_dp_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.p_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         
         self.op_w__u_to_w = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         
         self.op_w__p_to_w = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.p_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         
         self.op_w__t_to_w = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.t_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         
         
         """
@@ -1197,49 +1208,43 @@ class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
         self.op_p__grad_dp_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.p_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
         
         self.op_p__grad_dp_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.p_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
         
         self.op_p__div_du_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
         self.op_p__div_dw_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
         
         self.op_p__u_to_p = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
         
         self.op_p__w_to_p = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
     
         
         """
@@ -1248,49 +1253,43 @@ class SimPDE_NSNonlinearA__p_t(SimPDE_Base):
         self.op_t__grad_dt_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.t_grid,
             dst_grid = self.t_grid,
-        )
+        ).bake()
         
         self.op_t__grad_dt_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.t_grid,
             dst_grid = self.t_grid,
-        )
+        ).bake()
         
         self.op_t__div_du_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.t_grid,
-        )
+        ).bake()
         self.op_t__div_dw_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.t_grid,
-        )
+        ).bake()
         
         self.op_t__u_to_t = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.t_grid,
-        )
+        ).bake()
         
         self.op_t__w_to_t = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.t_grid,
-        )
+        ).bake()
     
     
     def dU_dt(self, Uset):
@@ -1432,41 +1431,36 @@ class SimPDE_NSNonlinearA__rho_t(SimPDE_Base):
         self.op_u__grad_du_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         self.op_u__grad_du_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         self.op_u__grad_drho_t_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.rho_t_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         self.op_u__rho_to_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.rho_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         self.op_u__w_to_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.u_grid,
-        )
+        ).bake()
         
         
         
@@ -1476,41 +1470,36 @@ class SimPDE_NSNonlinearA__rho_t(SimPDE_Base):
         self.op_w__grad_dw_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         self.op_w__grad_dw_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         
         self.op_w__grad_drho_t_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.rho_t_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         
         self.op_w__rho_to_w = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.rho_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         
         self.op_w__u_to_w = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.w_grid,
-        )
+        ).bake()
         
         
         
@@ -1522,49 +1511,43 @@ class SimPDE_NSNonlinearA__rho_t(SimPDE_Base):
         self.op_rho__div_drho_u_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.rho_u_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
         self.op_rho__div_drho_w_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.rho_w_grid,
             dst_grid = self.p_grid,
-        )
+        ).bake()
         
         self.op_rho__u_to_rho_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.rho_u_grid,
-        )
+        ).bake()
         
         self.op_rho__rho_to_rho_u = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.rho_grid,
             dst_grid = self.rho_u_grid,
-        )
+        ).bake()
         
         self.op_rho__w_to_rho_w = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.rho_w_grid,
-        )
+        ).bake()
         
         self.op_rho__rho_to_rho_w = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.rho_grid,
             dst_grid = self.rho_w_grid,
-        )
+        ).bake()
         
         
         
@@ -1574,49 +1557,43 @@ class SimPDE_NSNonlinearA__rho_t(SimPDE_Base):
         self.op_t__grad_dt_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.t_grid,
             dst_grid = self.t_grid,
-        )
+        ).bake()
         
         self.op_t__grad_dt_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.t_grid,
             dst_grid = self.t_grid,
-        )
+        ).bake()
         
         self.op_t__div_du_dx = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.t_grid,
-        )
+        ).bake()
         self.op_t__div_dw_dz = libpdefd.OperatorDiffND(
             diff_dim = 1,
             diff_order = 1,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.t_grid,
-        )
+        ).bake()
     
         self.op_t__u_to_t = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.u_grid,
             dst_grid = self.t_grid,
-        )
+        ).bake()
         
         self.op_t__w_to_t = libpdefd.OperatorDiffND(
             diff_dim = 0,
             diff_order = 0,
-            min_approx_order = self.simconfig.min_spatial_approx_order,
             src_grid = self.w_grid,
             dst_grid = self.t_grid,
-        )
+        ).bake()
     
     
     

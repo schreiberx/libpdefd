@@ -6,22 +6,50 @@ import libpdefd.array_matrix.libpdefd_matrix as matrix
 import libpdefd.array_matrix.libpdefd_array as libpdefd_array
 
 
+
+_default_params = {
+    'operator_diff__min_approx_order': 2
+}
+
+
+def set_default_param(name, value):
+    if not name in _default_params:
+        raise Exception("Parameter '"+name+"' not in default params")
+    
+    _default_params[name] = value
+
+
+
 class _operator_base:
     def __init__(self):
-        self._L_sparse = None
+        self._L_sparse_compute = None
+        self._L_sparse_setup = None
         self._name = "TMP"
+    
     
     def setup(self, name):
         self._name = name
     
+    
+    def bake(self):
+        """
+        Bake setup matrix to one which is computationally efficient
+        """
+        self._L_sparse_compute = matrix.matrix_sparse_for_compute(self._L_sparse_setup)
+        self._L_sparse_setup = None 
+        return self
+
+
+
+    """
     def get_L(self):
-        return self._L_sparse.toarray()
+        return self._L_sparse_setup.toarray()
     
     def get_c(self):
         return self._c
     
-    def get_L_sparse(self):
-        return self._L_sparse
+    def get_L_sparse_setup(self):
+        return self._L_sparse_setup
     
     def solve(self, x, solver_tol=None, max_iterations=None):
         raise Exception("TODO")
@@ -30,16 +58,16 @@ class _operator_base:
             import libtide.linalg.iterative_solvers as iterative_solvers
             b = x.flatten()-self._c
             
-            retval = iterative_solvers.solve(self._L_sparse, b, solver="gmres", solver_tol=solver_tol, max_iterations=max_iterations)
+            retval = iterative_solvers.solve(self._L_sparse_setup, b, solver="gmres", solver_tol=solver_tol, max_iterations=max_iterations)
             
             return retval.reshape(self._dst_grid.shape)
-            #return self._L_sparse.dot(x) + self._c
+            #return self._L_sparse_setup.dot(x) + self._c
         
         elif isinstance(x, VariableND) or isinstance(x, variable._VariableND_Base):
             raise Exception("TODO")
-            assert self._L_sparse.shape[0] == self._c.shape[0]
+            assert self._L_sparse_setup.shape[0] == self._c.shape[0]
             
-            data = (self._L_sparse.dot(x._data.flatten()) + self._c).reshape(self._dst_grid.shape)
+            data = (self._L_sparse_setup.dot(x._data.flatten()) + self._c).reshape(self._dst_grid.shape)
             
             return VariableND(
                 self._dst_grid,
@@ -48,25 +76,31 @@ class _operator_base:
             )
         
         raise Exception("Don't know how to handle '"+str(type(x))+"'")
-    
+    """
     
     def apply(self, x):
+        """
+        Make sure that everything got "baked", hence the compuational efficient matrix is now avaialble
+        """
+        if self._L_sparse_compute == None:
+            raise Exception("The layout optimized for computations is not yet set up. Please call bake() on the operator to do so!")
+        
         if isinstance(x, variable._VariableND_Base):
-            assert self._L_sparse.shape[0] == self._c.shape[0]
+            assert self._L_sparse_compute.shape[0] == self._c.shape[0]
             
-            data = self._L_sparse.dot_add_reshape(x._data, self._c, self._dst_grid.shape)
+            data = self._L_sparse_compute.dot_add_reshape(x._data, self._c, self._dst_grid.shape)
             return variable._VariableND_Base(data)
         
         elif isinstance(x, libpdefd_array._array_base):
-            assert self._L_sparse.shape[0] == self._c.shape[0]
+            assert self._L_sparse_compute.shape[0] == self._c.shape[0]
             
-            data = self._L_sparse.dot_add_reshape(x, self._c, self._dst_grid.shape)
+            data = self._L_sparse_compute.dot_add_reshape(x, self._c, self._dst_grid.shape)
             return libpdefd_array._array_base(data = data)
         
         elif isinstance(x, np.ndarray):
             assert len(x.shape) == 1
-            assert x.shape[0] == self._L_sparse.shape[0]
-            return self._L_sparse.dot_add(x, self._c)
+            assert x.shape[0] == self._L_sparse_compute.shape[0]
+            return self._L_sparse_compute.dot_add(x, self._c)
         
         raise Exception("Don't know how to handle '"+str(type(x))+"'")
     
@@ -76,64 +110,64 @@ class _operator_base:
     
     def __add__(self, a):
         retval = self.__class__()
-        retval._L_sparse = self._L_sparse + a._L_sparse
+        retval._L_sparse_setup = self._L_sparse_setup + a._L_sparse_setup
         return retval
 
     def __sub__(self, a):
         retval = self.__class__()
-        retval._L_sparse = self._L_sparse - a._L_sparse
+        retval._L_sparse_setup = self._L_sparse_setup - a._L_sparse_setup
         return retval
 
     def __mul__(self, a):
         retval = self.__class__()
         if isinstance(a, VariableND):
-            retval._L_sparse = self._L_sparse * a._L_sparse
+            retval._L_sparse_setup = self._L_sparse_setup * a._L_sparse_setup
         else:
-            retval._L_sparse = self._L_sparse * a
+            retval._L_sparse_setup = self._L_sparse_setup * a
         return retval
 
     def __rmul__(self, a):
         retval = self.__class__()
         if isinstance(a, VariableND):
-            retval._L_sparse = a._L_sparse * self._L_sparse
+            retval._L_sparse_setup = a._L_sparse_setup * self._L_sparse_setup
         else:
-            retval._L_sparse = a * self._L_sparse
+            retval._L_sparse_setup = a * self._L_sparse_setup
         return retval
 
     def __div__(self, a):
         retval = self.__class__()
-        retval._L_sparse = self._L_sparse / a._L_sparse
+        retval._L_sparse_setup = self._L_sparse_setup / a._L_sparse_setup
         return retval
 
     def __iadd__(self, a):
-        self._L_sparse += a._L_sparse
+        self._L_sparse_setup += a._L_sparse_setup
         return self
 
     def __isub__(self, a):
-        self._L_sparse -= a._L_sparse
+        self._L_sparse_setup -= a._L_sparse_setup
         return self
 
     def __imul__(self, a):
-        self._L_sparse *= a._L_sparse
+        self._L_sparse_setup *= a._L_sparse_setup
         return self
 
     def __idiv__(self, a):
-        self._L_sparse /= a._L_sparse
+        self._L_sparse_setup /= a._L_sparse_setup
         return self
 
     def __neg__(self):
         retval = self.__class__()
-        retval._L_sparse = -self._L_sparse
+        retval._L_sparse_setup = -self._L_sparse_setup
         return retval
 
     def __pos__(self):
         retval = self.__class__()
-        retval._L_sparse = self._L_sparse
+        retval._L_sparse_setup = self._L_sparse_setup
         return retval
 
     def __str__(self):
         retstr = ""
-        retstr += "shape: "+str(self._L_sparse.shape)
+        retstr += "shape: "+str(self._L_sparse_setup.shape)
         return retstr
 
 
@@ -169,7 +203,6 @@ class OperatorDiff1D(_operator_base):
             print(" + dst_x: "+str(dst_x))
             
             print("="*80)
-        
         
         """
         Determine src coordinates and indices to compute stencil for point dst_x on destination grid
@@ -718,9 +751,9 @@ class OperatorDiff1D(_operator_base):
     def setup(
         self,
         diff_order,
-        min_approx_order,
         dst_grid,
         src_grid = None,
+        min_approx_order = None,
         name = None,
     ):
         """
@@ -736,6 +769,9 @@ class OperatorDiff1D(_operator_base):
         src_grid:
             Source variable on which the differential evaluations are computed on
         """
+        
+        if min_approx_order == None:
+            min_approx_order = _default_params['operator_diff__min_approx_order']
         
         if src_grid is None:
             src_grid = dst_grid
@@ -804,8 +840,7 @@ class OperatorDiff1D(_operator_base):
         Note, that all src grid points are included here and that boundary conditions are coped with later on.
         This makes it more flexible.
         """
-        L_sparse_tmp = matrix.matrix_sparse_for_setup((dst_grid.num_dofs, src_grid.num_stencil_grid_points))
-        
+        self._L_sparse_setup = matrix.matrix_sparse_for_setup((dst_grid.num_dofs, src_grid.num_stencil_grid_points))
         
         """
         Iterate over all points on destination field.
@@ -842,7 +877,13 @@ class OperatorDiff1D(_operator_base):
             Do this step-by-step, since having duplicated entries in src_range (e.g. in case of symmetric BCs), this doens't work.
             """
             for i in range(len(src_range)):
-                L_sparse_tmp[dst_idx, src_range[i]] += stencil[i]
+                if 0:
+                    # Hack to avoid issue with += updates on sparse matrices
+                    tmp = self._L_sparse_setup[dst_idx, src_range[i]].to_numpy_array()
+                    tmp += stencil[i]
+                    self._L_sparse_setup[dst_idx, src_range[i]] = tmp
+                else:
+                    self._L_sparse_setup[dst_idx, src_range[i]] += stencil[i]
             
             
             if 0:
@@ -863,15 +904,15 @@ class OperatorDiff1D(_operator_base):
             if src_grid.boundaries[0].type == "symmetric":
                 if not src_grid.boundaries[0].flip_sign:
                     if diff_order == 1:
-                        assert np.isclose(0, np.sum(L_sparse_tmp[0,:].toarray()))
-                        L_sparse_tmp[0,:] = 0
+                        assert np.isclose(0, np.sum(self._L_sparse_setup[0,:].to_numpy_array()))
+                        self._L_sparse_setup[0,:] = 0
         
         if dst_x == src_grid.domain_end:
             if src_grid.boundaries[1].type == "symmetric":
                 if not src_grid.boundaries[1].flip_sign:
                     if diff_order == 1:
-                        assert np.isclose(0, np.sum(L_sparse_tmp[-1,:].toarray()))
-                        L_sparse_tmp[-1,:] = 0
+                        assert np.isclose(0, np.sum(self._L_sparse_setup[-1,:].to_numpy_array()))
+                        self._L_sparse_setup[-1,:] = 0
         
         
         """
@@ -891,7 +932,7 @@ class OperatorDiff1D(_operator_base):
         
         if 0:
             np.set_printoptions(linewidth=180)
-            print(L_sparse_tmp.toarray())
+            print(self._L_sparse_setup.toarray())
             print(self._c)
             print(src_grid.boundaries[0].dirichlet_value)
             print("*"*80)
@@ -904,7 +945,8 @@ class OperatorDiff1D(_operator_base):
             """
             We only have to get rid of the last column
             """
-            L_sparse_tmp = L_sparse_tmp[:,:src_grid.num_dofs]
+            self._L_sparse_setup = self._L_sparse_setup[:,:src_grid.num_dofs]
+            
 
         else:
             """
@@ -912,9 +954,9 @@ class OperatorDiff1D(_operator_base):
             """
             if src_grid.boundaries[0].type == "dirichlet":
                 # Getting a column as an array is a little bit more tricky with sp.sparse
-                col = L_sparse_tmp[:,0].toarray()[:,0]
+                col = self._L_sparse_setup[:,0].to_numpy_array()[:,0]
                 self._c += col*src_grid.boundaries[0].dirichlet_value
-                L_sparse_tmp = L_sparse_tmp[:,1:]
+                self._L_sparse_setup = self._L_sparse_setup[:,1:]
             
             elif src_grid.boundaries[0].type == "neumann_extrapolated":
                 
@@ -941,15 +983,15 @@ class OperatorDiff1D(_operator_base):
                 )
                 
                 assert stencil[0] != 0, "Internal error"
-
+                
                 for j in range(dst_grid.num_dofs):
-                    d = L_sparse_tmp[j,0]/stencil[0]
+                    d = self._L_sparse_setup[j,0]/stencil[0]
                     self._c[j] += d * neumann_value
                     
                     for i in range(1, len(stencil)):
-                        L_sparse_tmp[j,i] -= d*stencil[i]
+                        self._L_sparse_setup[j,i] -= d*stencil[i]
                 
-                L_sparse_tmp = L_sparse_tmp[:,1:]
+                self._L_sparse_setup = self._L_sparse_setup[:,1:]
             
             
             elif src_grid.boundaries[0].type == "symmetric":
@@ -966,10 +1008,10 @@ class OperatorDiff1D(_operator_base):
             Second, handle boundary conditions at the end of the domain
             """
             if src_grid.boundaries[1].type == "dirichlet":
-                col = L_sparse_tmp[:,-1].toarray()[:,0]
+                col = self._L_sparse_setup[:,-1].to_numpy_array()[:,0]
                 self._c += col*src_grid.boundaries[1].dirichlet_value
                 
-                L_sparse_tmp = L_sparse_tmp[:,:-1]
+                self._L_sparse_setup = self._L_sparse_setup[:,:-1]
             
             elif src_grid.boundaries[1].type == "neumann_extrapolated":
 
@@ -998,13 +1040,13 @@ class OperatorDiff1D(_operator_base):
                 assert stencil[-1] != 0, "Internal error"
                 
                 for j in range(dst_grid.num_dofs):
-                    d = L_sparse_tmp[j,-1]/stencil[-1]
+                    d = self._L_sparse_setup[j,-1]/stencil[-1]
                     self._c[j] += d * neumann_value
                     
                     for i in range(0, len(stencil)-1):
-                        L_sparse_tmp[j,i-len(stencil)] -= d*stencil[i]
+                        self._L_sparse_setup[j,i-len(stencil)] -= d*stencil[i]
                 
-                L_sparse_tmp = L_sparse_tmp[:,:-1]
+                self._L_sparse_setup = self._L_sparse_setup[:,:-1]
             
             
             elif src_grid.boundaries[1].type == "symmetric":
@@ -1014,8 +1056,6 @@ class OperatorDiff1D(_operator_base):
             
             else:
                 raise Exception("Boundary condition '"+src_grid.boundaries[1].type+"' not supported")
-        
-        self._L_sparse = matrix.matrix_sparse_for_compute(L_sparse_tmp)
         
         
         """
@@ -1044,23 +1084,24 @@ class OperatorDiff1D(_operator_base):
         
         if 0:
             np.set_printoptions(linewidth=180)
-            print(L_sparse_tmp.toarray())
-            print(self._L_sparse.toarray())
+            print(self._L_sparse_setup.to_numpy_array())
+            print(self._L_sparse_setup.to_numpy_array())
             print(self._c)
-        
-        # Estimate possible cancellation errors
-        self._L_sparse_min = self._L_sparse.reduce_min()
-        self._L_sparse_max = self._L_sparse.reduce_max()
-        self._L_sparse_cancellation_error = self._L_sparse_max - self._L_sparse_min
+
+        if 0:
+            # Estimate possible cancellation errors
+            self._L_sparse_setup_min = self._L_sparse_setup.reduce_min()
+            self._L_sparse_setup_max = self._L_sparse_setup.reduce_max()
+            self._L_sparse_setup_cancellation_error = self._L_sparse_setup_max - self._L_sparse_setup_min
         
         if 0:
             np.set_printoptions(linewidth=180)
-            print(self._L_sparse.toarray().shape)
-            print(self._L_sparse.toarray())
+            print(self._L_sparse_setup.to_numpy_array().shape)
+            print(self._L_sparse_setup.to_numpy_array())
             print(self._c)
         
-        assert self._L_sparse.shape[0] == self._c.shape[0], "Internal Error"
-        assert self._L_sparse.shape[0] == dst_grid.num_dofs, "Internal Error"
+        assert self._L_sparse_setup.shape[0] == self._c.shape[0], "Internal Error"
+        assert self._L_sparse_setup.shape[0] == dst_grid.num_dofs, "Internal Error"
         
 
 
@@ -1082,9 +1123,9 @@ class OperatorDiffND(_operator_base):
         self,
         diff_dim: int,
         diff_order : int,
-        min_approx_order : int,
         dst_grid : GridInfoND,
         src_grid  : GridInfoND = None,
+        min_approx_order : int = None,
         assert_aligned = False,
     ):
         """
@@ -1103,6 +1144,9 @@ class OperatorDiffND(_operator_base):
         if src_grid == None:
             src_grid = dst_grid
         
+        if min_approx_order == None:
+            min_approx_order = _default_params['operator_diff__min_approx_order']
+        
         self._dim = diff_dim
         self._diff_order = diff_order
         self.min_approx_order = min_approx_order
@@ -1119,22 +1163,21 @@ class OperatorDiffND(_operator_base):
             """
             Generate matrix with the linear operator 'L' in it
             """
-            retm = matrix.matrix_sparse_for_compute(np.array([1]))
+            retm = matrix.matrix_sparse_for_setup(np.array([1]))
             
             for i in range(0, i_dim):
-                M = matrix.eye_compute(dst_grid.shape[i])
+                M = matrix.eye_setup(dst_grid.shape[i])
                 #retm = sparse.kron(retm, M)
                 retm = retm.kron(M)
-                
             
             #retm = sparse.kron(retm, L)
             retm = retm.kron(L)
             
             for i in range(i_dim+1, num_dims):
-                M = matrix.eye_compute(src_grid.shape[i])
+                M = matrix.eye_setup(src_grid.shape[i])
                 #retm = sparse.kron(retm, M)
                 retm = retm.kron(M)
-
+            
             return retm
         
         
@@ -1161,15 +1204,15 @@ class OperatorDiffND(_operator_base):
         total_src_N = np.prod(src_grid.shape)
         total_dst_N = np.prod(dst_grid.shape)
         
-        self._L_sparse = matrix.eye_compute(total_src_N)
+        self._L_sparse_setup = matrix.eye_setup(total_src_N)
         self._c = libpdefd_array.array_zeros(total_src_N)
         
         if 0:
-            print("self._L_sparse: "+str(self._L_sparse.toarray().shape))
+            print("self._L_sparse_setup: "+str(self._L_sparse_setup.to_numpy_array().shape))
             print("self._c: "+str(self._c.shape))
             print("src_grid.shape:", src_grid.shape)
             print("dst_grid.shape:", dst_grid.shape)
-    
+        
         for dim in range(len(dst_grid)):
             if 0:
                 print("*"*80)
@@ -1179,7 +1222,7 @@ class OperatorDiffND(_operator_base):
             Special differential operator in this particular dimension.
             If the derivative shouldn't be computed along a particular dimension,
             we only use an interpolation
-            """ 
+            """
             diff_op = OperatorDiff1D(
                     diff_order = self._diff_order if dim == diff_dim else 0,        # Differentiation or interpolation?
                     min_approx_order = min_approx_order,
@@ -1196,8 +1239,8 @@ class OperatorDiffND(_operator_base):
                         raise Exception("Grid in dimension "+str(dim)+" doesn't match, please check")
                     
                     # abs is natively supported, but max isn't
-                    err = abs(diff_op._L_sparse - matrix.eye_compute(np.product(dst_grid[dim].num_dofs))).reduce_max()
-                    if err > 1e-10*(abs(diff_op._L_sparse).reduce_max()):
+                    err = abs(diff_op._L_sparse_setup - matrix.eye_setup(np.product(dst_grid[dim].num_dofs))).reduce_max()
+                    if err > 1e-10*(abs(diff_op._L_sparse_setup).reduce_max()):
                         print("*"*80)
                         print("* ERROR")
                         print("*"*80)
@@ -1210,41 +1253,43 @@ class OperatorDiffND(_operator_base):
             """
             Setup operator matrix and 'c' vector which assumes all dimensions up to 'dim' have been already processed.
             """
-            BL = get_bcast_matrix_L(diff_op._L_sparse, dim)
+            BL = get_bcast_matrix_L(diff_op._L_sparse_setup, dim)
+            
+            
             Bc = get_bcast_matrix_c(diff_op._c, dim)
             
             if 0:
-                print("diff_op._L_sparse", diff_op._L_sparse.toarray().shape)
+                print("diff_op._L_sparse_setup", diff_op._L_sparse_setup.to_numpy_array().shape)
                 print("diff_op._c", diff_op._c.shape)
-                print("BL", BL.toarray().shape)
+                print("BL", BL.to_numpy_array().shape)
                 print("Bc", Bc.shape)
                 print("self._c", self._c.shape)
             
             if dim == 0:
-                self._L_sparse = BL
+                self._L_sparse_setup = BL
                 self._c = Bc
             else:
-                self._L_sparse = BL.dot(self._L_sparse)
+                self._L_sparse_setup = BL.dot(self._L_sparse_setup)
                 self._c = BL.dot(self._c) + Bc
             
-            if self._L_sparse.shape[0] != self._c.shape[0]:
+            if self._L_sparse_setup.shape[0] != self._c.shape[0]:
                 print("Internal Error")
                 print(" + dim: "+str(dim))
-                print(" + self._L_sparse.shape: "+str(self._L_sparse.shape))
+                print(" + self._L_sparse_setup.shape: "+str(self._L_sparse_setup.shape))
                 print(" + self._c.shape: "+str(self._c.shape))
                 raise Exception("Internal Error")
             
             if 0:
                 print("INFO")
                 print(" + dim: "+str(dim))
-                print(" + self._L_sparse.shape: "+str(self._L_sparse.shape))
+                print(" + self._L_sparse_setup.shape: "+str(self._L_sparse_setup.shape))
                 print(" + self._c.shape: "+str(self._c.shape))
                 print(" + dst_grid.shape: "+str(dst_grid.shape))
                 
             ndofs = np.prod(dst_grid.shape)
-            assert self._L_sparse.shape[0] == self._c.shape[0], "Internal Error"
+            assert self._L_sparse_setup.shape[0] == self._c.shape[0], "Internal Error"
         
         
-        assert self._L_sparse.shape[0] == self._c.shape[0], "Internal Error"
-        assert self._L_sparse.shape[0] == np.prod(dst_grid.shape), "Internal Error"
+        assert self._L_sparse_setup.shape[0] == self._c.shape[0], "Internal Error"
+        assert self._L_sparse_setup.shape[0] == np.prod(dst_grid.shape), "Internal Error"
 

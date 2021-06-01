@@ -85,8 +85,200 @@
 Straka test case
 \end_layout
 
+\begin_layout Author
+Martin Schreiber
+\end_layout
+
+\begin_layout Date
+2021-08-18
+\end_layout
+
 \begin_layout Section
-Initial condition for background state
+Introduction
+\end_layout
+
+\begin_layout Standard
+The Straka test case is a commonly used benchmarks for discretization methods
+ of the Navier-Stokes equation.
+ This work targets to give an overview of these initial conditions in a
+ more structures way.
+\end_layout
+
+\begin_layout Section
+Equations
+\end_layout
+
+\begin_layout Standard
+mass continuity equation
+\begin_inset Formula 
+\begin{align*}
+\rho_{t}+\left(\rho u\right)_{x}+\left(\rho w\right)_{z} & =0
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+horizontal momentum
+\begin_inset Formula 
+\[
+\left(\rho u\right)_{t}+\left(\rho uu\right)_{x}+\left(\rho uw\right)_{z}+p_{x}-\rho K\left(u_{xx}+u_{zz}\right)=0
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+vertical momentum
+\begin_inset Formula 
+\[
+\left(\rho w\right)_{t}+\left(\rho uw\right)_{x}+\left(\rho ww\right)_{z}+p_{z}+\rho g-\rho K\left(w_{xx}+w_{zz}\right)=0
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+energy
+\begin_inset Formula 
+\[
+\left(e\rho\right)_{t}+\left(e\rho u\right)_{x}+\left(e\rho w\right)_{z}+p\left(u_{x}+w_{z}\right)-K\rho T\left(C_{p}\theta^{-1}\right)\left(\theta_{xx}+\theta_{zz}\right)=K\rho T\left(C_{p}\theta^{-1}\right)\left[\theta_{t}+u\left(\theta\right)_{x}+w\left(\theta\right)_{z}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Fundamental equations
+\end_layout
+
+\begin_layout Standard
+Equation of state
+\begin_inset Formula 
+\[
+P=\rho R_{d}T.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Internal energy
+\begin_inset Formula 
+\[
+e=C_{v}T
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Exner function
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\pi=\left(\frac{p}{p_{0}}\right)^{R_{d}/C_{p}}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Potential temperature
+\begin_inset Formula 
+\begin{align*}
+\theta & =T\pi^{-1}\\
+T & =\theta\pi
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Temperature conversion (Celsius 
+\begin_inset Formula $\Leftrightarrow$
+\end_inset
+
+ Kelvin)
+\begin_inset Formula 
+\[
+T_{\text{Celcius}}=T_{\text{Kelvin}}\cdot273.15\text{K}^{-1}{}^{\circ}\text{C}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+T_{\text{Kelvin}}=T_{\text{Celcius}}+273.15\text{K}{}^{\circ}\text{C}^{-1}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Constants
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+R_{d} & =287\text{ J}\text{kg}^{-1}\text{K}^{-1}\\
+C_{p} & =1004\text{ J}\text{kg}^{-1}\text{K}^{-1}\\
+C_{v} & =717\text{ J}\text{kg}^{-1}\text{K}^{-1}\\
+p_{0} & =100\cdot10^{3}\text{kg}\text{m}^{-1}\text{s}^{-2}\\
+g & =9.81\text{m}\text{s}^{-2}\\
+K & =75\text{m}^{2}\text{s}^{-1}\\
+T_{s} & =\theta=300\text{K}=26,85\ensuremath{^{\circ}}\text{C}\,\,\,\,\text{Surface temperature}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Initial condition
+\end_layout
+
+\begin_layout Subsection
+Domain
+\end_layout
+
+\begin_layout Standard
+The domain is given by
+\begin_inset Formula 
+\[
+\Omega=[0\text{m};25.6\cdot10^{3}\text{m}]\times[0\text{m};6.4\cdot10^{3}\text{m}]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Background state
 \end_layout
 
 \begin_layout Standard
@@ -108,8 +300,8 @@ for the pressure by
 \begin_layout Standard
 \begin_inset Formula 
 \begin{align*}
-\overline{p} & =p_{0}\left(\overline{T}T_{s}^{-1}\right)^{R/C_{p}}\,\,\,\text{\textbf{WARNING!\,THIS\,IS\,WRONG!}}\\
- & =p_{0}\left(\overline{T}T_{s}^{-1}\right)^{C_{p}/R}\,\,\,\text{THIS IS RIGHT!}\\
+\overline{p} & =p_{0}\left(\overline{T}T_{s}^{-1}\right)^{R/C_{p}}\,\,\,\textbf{WARNING! THIS IS WRONG!}\\
+ & =p_{0}\left(\overline{T}T_{s}^{-1}\right)^{C_{p}/R}\,\,\,\textbf{\text{THIS IS RIGHT!}}\\
  & =p_{0}\left(\overline{T}T_{s}^{-1}\right)^{\kappa}
 \end{align*}
 
@@ -130,7 +322,7 @@ with
 
 \end_layout
 
-\begin_layout Section
+\begin_layout Subsubsection
 Hydrostatic balance
 \end_layout
 
@@ -150,8 +342,8 @@ holds for the equations above and we get
 \begin_inset Formula 
 \begin{eqnarray}
 \frac{d}{dz}\left(p_{0}\left(\overline{T}T_{s}^{-1}\right)^{\kappa}\right) & = & -\overline{\rho}g\\
-p_{0}T_{s}^{-\kappa}\frac{d}{dz}\left(\overline{T}^{\kappa}\right) & = & -\overline{\rho}g\text{ (OK)}\\
-p_{0}T_{s}^{-\kappa}\kappa\left(\overline{T}{}^{\kappa-1}\right)\frac{d}{dz}\overline{T} & = & -\frac{\overline{p}}{R\overline{T}}g\text{ (OK)}\\
+p_{0}T_{s}^{-\kappa}\frac{d}{dz}\left(\overline{T}^{\kappa}\right) & = & -\overline{\rho}g\\
+p_{0}T_{s}^{-\kappa}\kappa\left(\overline{T}{}^{\kappa-1}\right)\frac{d}{dz}\overline{T} & = & -\frac{\overline{p}}{R\overline{T}}g\\
 \overline{T}Rp_{0}T_{s}^{-\kappa}\kappa\left(\overline{T}{}^{\kappa-1}\right)gC_{p}^{-1} & = & \overline{p}g\\
 Rp_{0}T_{s}^{-\kappa}\kappa\left(\overline{T}{}^{\kappa}\right)C_{p}^{-1} & = & \overline{p}\\
 Rp_{0}T_{s}^{-\kappa}\kappa\left(\overline{T}{}^{\kappa}\right)C_{p}^{-1} & = & p_{0}\left(\overline{T}T_{s}^{-1}\right)^{\kappa}\\
@@ -172,7 +364,180 @@ Here, we can observe that there's an error in the equations above, requiring
 
 \begin_inset Formula 
 \[
-\Rightarrow\kappa=C_{p}/R
+\Rightarrow\kappa=C_{p}/R.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Perturbation
+\end_layout
+
+\begin_layout Standard
+There is a temperature perturbation given by
+\begin_inset Formula 
+\[
+\Delta T=\begin{cases}
+0\ensuremath{^{\circ}}\text{C} & \text{if }L>1.0\\
+-15\ensuremath{^{\circ}}\text{C}\left[\cos\left(\pi L\right)+1.0\right]/2 & \text{if }L\leq1.0.
+\end{cases}
+\]
+
+\end_inset
+
+for
+\begin_inset Formula 
+\[
+L=\sqrt{\left(\frac{x-x_{x}}{x_{r}}\right)^{2}+\left(\frac{z-z_{x}}{z_{r}}\right)^{2}}
+\]
+
+\end_inset
+
+with 
+\begin_inset Formula 
+\begin{eqnarray*}
+x_{c} & = & 0\cdot10^{0}\text{m}\\
+x_{r} & = & 4\cdot10^{3}\text{m}\\
+z_{c} & = & 3\cdot10^{3}\text{m}\\
+z_{r} & = & 2\cdot10^{3}\text{m}.
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Validation
+\end_layout
+
+\begin_layout Standard
+The paper claims the minimum potential temperature perturbation 
+\begin_inset Formula $\theta'$
+\end_inset
+
+ to be 
+\begin_inset Formula 
+\begin{align*}
+\min\left(\theta'(t=0)\right) & =-16.624^{\circ}\text{C}\\
+ & =256.526\text{K}.
+\end{align*}
+
+\end_inset
+
+We test this by using the minimum temperature specified as part of the benchmark
+\begin_inset Formula 
+\begin{align*}
+\min\left(T'(t=0)\right) & =-15.0^{\circ}\text{C}\\
+ & =258.15\text{K}.
+\end{align*}
+
+\end_inset
+
+Using the equation 
+\begin_inset Formula $\theta=T\pi^{-1}$
+\end_inset
+
+ and with 
+\begin_inset Formula $\pi$
+\end_inset
+
+ solely related to the basic state, we can directly write
+\begin_inset Formula 
+\[
+\Delta\theta(z_{c})=\Delta T(z_{c})\pi^{-1}.
+\]
+
+\end_inset
+
+Using
+\begin_inset Formula 
+\begin{align*}
+\pi & =\left(\frac{p(z_{c})}{p_{0}}\right)^{R_{d}/C_{p}}\\
+ & =\left(\frac{p_{0}\left(\overline{T}(z_{c})T_{s}^{-1}\right)^{C_{p}/R}}{p_{0}}\right)^{R_{d}/C_{p}}\\
+ & =\overline{T}(z_{c})T_{s}^{-1}\\
+ & =\frac{T_{s}-zgC_{p}^{-1}}{T_{s}}\\
+ & =\frac{300\text{K}-3\cdot10^{3}\text{m}\cdot9.81\frac{\text{m}}{\text{s}^{2}}\cdot\left(1004\text{ J}\text{kg}^{-1}\text{K}^{-1}\right)^{-1}}{300\text{K}}\\
+ & \approx0.90229
+\end{align*}
+
+\end_inset
+
+we get
+\begin_inset Formula 
+\begin{align*}
+\Delta\theta & =-15.0^{\circ}\text{C}/0.90229\\
+ & =-16,624^{\circ}\text{C}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Reformulations
+\end_layout
+
+\begin_layout Standard
+Given the energy equation
+\begin_inset Formula 
+\[
+\left(e\rho\right)_{t}+\left(e\rho u\right)_{x}+\left(e\rho w\right)_{z}+p\left(u_{x}+w_{z}\right)-K\rho T\left(C_{p}\theta^{-1}\right)\left(\theta_{xx}+\theta_{zz}\right)=K\rho T\left(C_{p}\theta^{-1}\right)\left[\theta_{t}+u\left(\theta\right)_{x}+w\left(\theta\right)_{z}\right]
+\]
+
+\end_inset
+
+ we reformulate it first by using
+\begin_inset Formula 
+\begin{align*}
+\theta & =T\pi^{-1}\\
+T & =\theta\pi
+\end{align*}
+
+\end_inset
+
+yielding
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+\left(C_{v}T\rho\right)_{t}+\left(C_{v}T\rho u\right)_{x}+\left(C_{v}T\rho w\right)_{z}+p\left(u_{x}+w_{z}\right)-K\rho T\left(C_{p}T^{-1}\pi\right)\left(\theta_{xx}+\theta_{zz}\right) & =K\rho T\left(C_{p}T^{-1}\pi\right)\left[\theta_{t}+u\left(T\pi^{-1}\right)_{x}+w\left(T\pi^{-1}\right)_{z}\right]\\
+\left(C_{v}T\rho\right)_{t}+\left(C_{v}T\rho u\right)_{x}+\left(C_{v}T\rho w\right)_{z}+p\left(u_{x}+w_{z}\right)-K\rho C_{p}\pi\left(\theta_{xx}+\theta_{zz}\right) & =K\rho\left(C_{p}\pi\right)\left[\theta_{t}+u\left(T\pi^{-1}\right)_{x}+w\left(T\pi^{-1}\right)_{z}\right]\\
+ & =K\rho\left(C_{p}\pi\right)\left[\theta_{t}+uT_{x}\pi^{-1}-uT\pi^{-2}\pi_{x}+wT_{z}\pi^{-1}-wT\pi^{-2}\pi_{z}\right]
+\end{align*}
+
+\end_inset
+
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+Then, using
+\begin_inset Formula 
+\[
+\pi=\left(\frac{p}{p_{0}}\right)^{R_{d}/C_{p}}
+\]
+
+\end_inset
+
+we get
+\begin_inset Formula 
+\[
+\left(C_{v}T\rho\right)_{t}+\left(C_{v}T\rho u\right)_{x}+\left(C_{v}T\rho w\right)_{z}+p\left(u_{x}+w_{z}\right)-K\rho C_{p}\left(\frac{p}{p_{0}}\right)^{R_{d}/C_{p}}\left(\theta_{xx}+\theta_{zz}\right)=K\rho\left(C_{p}\pi\right)\left[\theta_{t}+uT_{x}\left(\frac{p}{p_{0}}\right)^{-R_{d}/C_{p}}-uT\left(\frac{p}{p_{0}}\right)^{-2R_{d}/C_{p}}\pi_{x}+wT_{z}\left(\frac{p}{p_{0}}\right)^{-R_{d}/C_{p}}+wT\left(\frac{p}{p_{0}}\right)^{-2R_{d}/C_{p}}\pi_{z}\right]
 \]
 
 \end_inset

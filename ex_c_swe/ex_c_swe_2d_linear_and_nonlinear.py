@@ -41,7 +41,7 @@ simconfig.sim_visc = 0
 """
 Update other variables to make everything else match the currently setup variables
 """
-simconfig.base_res = 256
+simconfig.base_res = 128
 simconfig.sim_domain_aspect = 1
 
 
@@ -117,22 +117,7 @@ dt *= simconfig.dt_scaling
 print("dt: "+str(dt))
 
 
-output_freq = 10
-if len(sys.argv) >= 2:
-    output_freq = int(sys.argv[1])
-    if output_freq < 0:
-        output_freq = None
-
-
-num_timesteps = 10000
-if len(sys.argv) >= 3:
-    num_timesteps = int(sys.argv[2])
-    if num_timesteps < 0:
-        num_timesteps = None
-
-
-
-if output_freq != None:
+if simconfig.output_freq != None:
     
     vis = libpdefd.visualization.Visualization2DMesh(
         vis_dim_x = simconfig.vis_dim_x,
@@ -184,16 +169,16 @@ if output_freq != None:
 import time
 time_start = time.time()
 
-num_timesteps = int(6*60*60*24/dt)
-num_timesteps = int(60*60*45/dt)
-print("num_timesteps: "+str(num_timesteps))
+#simconfig.num_timesteps = int(6*60*60*24/dt)
+#simconfig.num_timesteps = int(60*60*45/dt)
+print("num_timesteps: "+str(simconfig.num_timesteps))
 
-for i in range(num_timesteps):
+for i in range(simconfig.num_timesteps):
     
     U = libpdefd.tools.RK4(simpde.dU_dt, U, dt)
 
-    if output_freq != None:
-        if (i+1) % output_freq == 0:
+    if simconfig.output_freq != None:
+        if (i+1) % simconfig.output_freq == 0:
 
             plot_update_data()
             plot_update_title(i)
@@ -207,7 +192,7 @@ print("*"*80)
 print("Total simulation time: "+str(time_end-time_start))
 print("*"*80)
 
-if output_freq != None:
+if simconfig.output_freq != None and simconfig.test_run == False:
     plot_update_data()
     plot_update_title(i)
     

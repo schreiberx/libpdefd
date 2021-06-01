@@ -1,4 +1,4 @@
 output_*pdf
 pdefd.egg-info
 **/__pycache__
-python_venv__*
+python_venv_*

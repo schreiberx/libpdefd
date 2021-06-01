@@ -6,55 +6,33 @@ import libpdefd
 #import libpdefd.libpdefd.libpdefd as libpdefd
 #import libpdefd.libpdefd.libpdefd_tools as libpdefd_tools
 
+import libpdefd.pdes.navierstokes as pde_navierstokes
 
-"""
-************************** OPTIONS START **************************
-"""
+simconfig = pde_navierstokes.SimConfig(1)
 
-"""
-Resolution of simulation in number of cells
-"""
-cell_res = 128
-
-"""
-Use grid staggering
-"""
-use_staggering = False
-
-"""
-Domain start/end coordinate
-"""
-domain_start = 0
-domain_end = 6.4*1e3
-domain_size = domain_end - domain_start
-
-
-
-"""
-GridInfo1D layout: 'auto' or 'manual'
-"""
-grid_setup = "auto"
-
-
-"""
-Minimum order of spatial approximation
-"""
-min_spatial_approx_order = 2
+simconfig.domain_start[0] = 0
+simconfig.domain_end[0] = 6.4*1e3
+#simconfig.use_staggering = False
 
 
 """
 Straka benchmark parameters
 """
-const_R = 287
-const_c_p = 1004
-#const_K = 75
-const_p0 = 100*1e3  # Surface pressure
-const_t0 = 300      # Surface temperature
-const_g = 9.81
+simconfig.const_R = 287
+simconfig.const_c_p = 1004
+simconfig.const_p0 = 100*1e3  # Surface pressure
+simconfig.const_t0 = 300      # Surface temperature
+simconfig.const_g = 9.81
 
-kappa = const_R / const_c_p
-alpha = 1.0/(kappa - 1.0)
-beta = kappa*alpha
+grid_setup = "auto"
+
+simconfig.update()
+
+"""
+Use symlog for plot
+"""
+use_symlog = False
+
 
 
 """
@@ -64,30 +42,23 @@ use_symlog = False
 
 
 """
-************************** OPTIONS END   **************************
+TODO: Figure out why this doesn't match the simconfig variant
 """
+k = 1/simconfig.kappa
+alpha = 1.0/(k - 1.0)
+beta = k*alpha
 
-
-p0 = const_p0
-t0 = const_t0
-R = const_R
-C = const_c_p
-k = C/R
-g = const_g
-
-kappa = C/R
-#kappa = R/C
 
 
 def fun_t(z):
-    return const_t0 - z*const_g/const_c_p
+    return simconfig.const_t0 - z*simconfig.const_g/simconfig.const_c_p
 
 
 def fun_p(z):
-    return const_p0 * np.power(fun_t(z)/const_t0, kappa)
+    return simconfig.const_p0 * np.power(fun_t(z)/simconfig.const_t0, simconfig.kappa)
 
 def fun_rho(z):
-    return fun_p(z)/(const_R*fun_t(z))
+    return fun_p(z)/(simconfig.const_R*fun_t(z))
 
 
 
@@ -95,7 +66,7 @@ def fun_rho(z):
 Guess time step size
 """
 
-dt = domain_size/(cell_res+1)
+dt = simconfig.domain_size[0]/(simconfig.cell_res[0]+1)
 dt *= 0.001
 
 
@@ -151,9 +122,9 @@ t_grid = libpdefd.GridInfo1D("t")
 Setup grids for each variable
 """
 if grid_setup == "auto":
-    w_grid.setup_autogrid(domain_start, domain_end, cell_res+1, boundaries=boundaries_u, staggered=False)
-    p_grid.setup_autogrid(domain_start, domain_end, cell_res+1, boundaries=boundaries_p, staggered=False)
-    t_grid.setup_autogrid(domain_start, domain_end, cell_res+1, boundaries=boundaries_t, staggered=False)
+    w_grid.setup_autogrid(simconfig.domain_start[0], simconfig.domain_end[0], simconfig.cell_res[0]+1, boundaries=boundaries_u, staggered=False)
+    p_grid.setup_autogrid(simconfig.domain_start[0], simconfig.domain_end[0], simconfig.cell_res[0]+1, boundaries=boundaries_p, staggered=False)
+    t_grid.setup_autogrid(simconfig.domain_start[0], simconfig.domain_end[0], simconfig.cell_res[0]+1, boundaries=boundaries_t, staggered=False)
 
 elif grid_setup == "manual":
     if use_staggering:
@@ -188,74 +159,65 @@ Setup differential operator
 """
 op_w__grad_dp_dz = libpdefd.OperatorDiff1D(
     diff_order = 1,
-    min_approx_order = min_spatial_approx_order,
     src_grid = p_grid,
     dst_grid = w_grid,
-)
+).bake()
 
 op_w__grad_dw_dz = libpdefd.OperatorDiff1D(
     diff_order = 1,
-    min_approx_order = min_spatial_approx_order,
     src_grid = w_grid,
     dst_grid = w_grid,
-)
+).bake()
 
 op_w__t_to_w = libpdefd.OperatorDiff1D(
     diff_order = 0,
-    min_approx_order = min_spatial_approx_order,
     src_grid = t_grid,
     dst_grid = w_grid,
-)
+).bake()
 
 op_w__p_to_w = libpdefd.OperatorDiff1D(
     diff_order = 0,
-    min_approx_order = min_spatial_approx_order,
     src_grid = p_grid,
     dst_grid = w_grid,
-)
+).bake()
 
 op_p__grad_dp_dz = libpdefd.OperatorDiff1D(
     diff_order = 1,
-    min_approx_order = min_spatial_approx_order,
     src_grid = p_grid,
     dst_grid = p_grid,
-)
+).bake()
 
 op_p__div_dw_dz = libpdefd.OperatorDiff1D(
     diff_order = 1,
-    min_approx_order = min_spatial_approx_order,
     src_grid = w_grid,
     dst_grid = p_grid,
-)
+).bake()
 
 op_p__w_to_p = libpdefd.OperatorDiff1D(
     diff_order = 0,
-    min_approx_order = min_spatial_approx_order,
     src_grid = w_grid,
     dst_grid = p_grid,
-)
+).bake()
 
 
 op_t__grad_dt_dz = libpdefd.OperatorDiff1D(
     diff_order = 1,
-    min_approx_order = min_spatial_approx_order,
     src_grid = t_grid,
     dst_grid = t_grid,
-)
+).bake()
 
 op_t__div_dw_dz = libpdefd.OperatorDiff1D(
     diff_order = 1,
-    min_approx_order = min_spatial_approx_order,
     src_grid = w_grid,
     dst_grid = t_grid,
-)
+).bake()
 
 op_t__w_to_t = libpdefd.OperatorDiff1D(
     diff_order = 0,
-    min_approx_order = min_spatial_approx_order,
     src_grid = w_grid,
     dst_grid = t_grid,
-)
+).bake()
+
 
 
 """
@@ -271,7 +233,7 @@ def dU_dt(U):
     retval = libpdefd.VariableNDSet_Empty_Like(U)
     w, p, t = U[:]
         
-    dw_dt = -w*op_w__grad_dw_dz(w) - const_R*op_w__t_to_w(t)/op_w__p_to_w(p) * op_w__grad_dp_dz(p) - const_g
+    dw_dt = -w*op_w__grad_dw_dz(w) - simconfig.const_R*op_w__t_to_w(t)/op_w__p_to_w(p) * op_w__grad_dp_dz(p) - simconfig.const_g
     dp_dt = -op_p__w_to_p(w)*op_p__grad_dp_dz(p) + alpha*p*op_p__div_dw_dz(w)
     dt_dt = -op_t__w_to_t(w)*op_t__grad_dt_dz(t) + beta*t*op_t__div_dw_dz(w)
     
@@ -322,22 +284,7 @@ U = libpdefd.VariableNDSet([w, p, t])
 U_t0 = U.copy()
 
 
-output_freq = 1
-
-if len(sys.argv) >= 2:
-    output_freq = int(sys.argv[1])
-    if output_freq < 0:
-        output_freq = None
-
-
-num_timesteps = 10000
-if len(sys.argv) >= 3:
-    num_timesteps = int(sys.argv[2])
-    if num_timesteps < 0:
-        num_timesteps = None
-
-
-if output_freq != None:
+if simconfig.output_freq != None:
     """
     Prepare plotting
     """
@@ -387,7 +334,7 @@ import time
 time_start = time.time()
 
 prev_timestep = None
-for i in range(num_timesteps):
+for i in range(simconfig.num_timesteps):
     
     import time
     #time.sleep(0.1)
@@ -401,8 +348,8 @@ for i in range(num_timesteps):
         U = libpdefd.tools.time_integrator_leapfrog(dU_dt, U, dt, prev_timestep)
         prev_timestep = prev_timestep_next
 
-    if output_freq != None:
-        if i % output_freq == 0:
+    if simconfig.output_freq != None:
+        if i % simconfig.output_freq == 0:
             
             ax.set_title("timestep "+str(i))
             update_plot()
@@ -415,5 +362,5 @@ time_end = time.time()
 
 print("Time: "+str(time_end-time_start))
 
-if output_freq != None:
+if simconfig.output_freq != None and simconfig.test_run == False:
     plt.show()
