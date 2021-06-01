@@ -3,10 +3,15 @@
 import sys
 import numpy as np
 import libpdefd
+import time
 
+
+debug = False
 
 
 for num_dims in [2,3,4]:
+#for num_dims in [3]:
+    #for boundary_condition in ["dirichlet"]:
     for boundary_condition in ["dirichlet", "neumann"]:
         
         base_res = 512 // 2**num_dims
@@ -60,19 +65,33 @@ for num_dims in [2,3,4]:
         
         rho_grid = libpdefd.GridInfoND(grid_nd_, name="rho")
         
+        time_start = time.time()
         grad = [ libpdefd.OperatorDiffND(
                         diff_dim = i,
                         diff_order = 1,
                         min_approx_order = min_spatial_approx_order,
                         src_grid = rho_grid,
                         dst_grid = rho_grid,
-                    ).bake() for i in range(num_dims)]
+                    ) for i in range(num_dims)]
+        
+        time_end = time.time()
+        delta_time = time_end - time_start
+        
+        time_start = time.time()
+        grad = [g.bake() for g in grad]
+        time_end_bake = time.time()
+        delta_time_bake = time_end_bake - time_start
+        
+        if debug:
+            print("delta_time: "+str(delta_time))
+            print("delta_time_bake: "+str(delta_time_bake))
         
         var = libpdefd.VariableND(rho_grid)
         var += sim_var_avg
         
         for dim in range(num_dims):
-            print(" + testing diff in dim: "+str(dim))
+            if debug:
+                print(" + testing diff in dim: "+str(dim))
     
             err = var.reduce_maxabs() - sim_var_avg
             assert err < 1e-10, "Error too high"

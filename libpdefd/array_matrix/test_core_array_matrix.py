@@ -8,13 +8,15 @@ Use this hack to use these python files also without libpdefd
 """
 try:
     import libpdefd.array_matrix.libpdefd_array as libpdefd_array
-    import libpdefd.array_matrix.libpdefd_matrix as libpdefd_matrix
+    import libpdefd.array_matrix.libpdefd_matrix_setup as libpdefd_matrix_setup
+    import libpdefd.array_matrix.libpdefd_matrix_compute as libpdefd_matrix_compute
     
 except:
     import sys, os
     sys.path.append(os.path.dirname(__file__))
     import libpdefd_array as libpdefd_array
-    import libpdefd_matrix as libpdefd_matrix
+    import libpdefd_matrix_setup as libpdefd_matrix_setup
+    import libpdefd_matrix_compute as libpdefd_matrix_compute
     sys.path.pop()
 
 
@@ -83,7 +85,7 @@ print("Matrix Sparse")
 print("*"*80)
 
 print(" + allocation")
-m_setup = libpdefd_matrix.matrix_sparse_for_setup(shape=(bl, al))
+m_setup = libpdefd_matrix_setup.matrix_sparse(shape=(bl, al))
 
 print(" + setup")
 for i in range(min(al, bl)):
@@ -100,7 +102,7 @@ print("*"*80)
 print("Matrix Compute")
 print("*"*80)
 
-m_compute = libpdefd_matrix.matrix_sparse_for_compute(m_setup)
+m_compute = libpdefd_matrix_compute.matrix_sparse(m_setup)
 print(m_compute)
 
 
@@ -116,7 +118,7 @@ for k in range(K):
     
     if 1:
         print("MUL test 1")
-        retval = m_compute.dot(a.flatten())
+        retval = m_compute.dot__DEPRECATED(a.flatten())
         assert retval.shape == c.shape
     
     

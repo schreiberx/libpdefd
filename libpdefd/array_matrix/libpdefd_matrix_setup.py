@@ -3,6 +3,7 @@ import numpy as np
 import scipy as sp
 import scipy.sparse as sparse
 import sys
+import time
 
 """
 Use this hack to use these python files also without libpdefd
@@ -37,22 +38,33 @@ class matrix_sparse:
             shape = None,
             dtype = None,
             _data = None,
+            format_override = False
     ):
         if _data != None:
+            """
+            _data refers to an already existing matrix which can be in different formats
+            
+            Everything will be converted to a lil_matrix 
+            """
             if isinstance(_data, sparse.lil_matrix):
                 self._matrix_lil = _data
                 
             elif isinstance(_data, float):
                 self._matrix_lil = sparse.lil_matrix([[_data]])
             
-            elif isinstance(_data, np.ndarray):
-                self._matrix_lil = sparse.lil_matrix(_data)
-                raise Exception("Shouldn't be required")
+            #elif isinstance(_data, np.ndarray):
+            #    self._matrix_lil = sparse.lil_matrix(_data)
+            #    raise Exception("Shouldn't be required")
+            
+            elif format_override:
+                self._matrix_lil = _data
                 
             else:
                 raise Exception("Unsupported type '"+str(type(_data))+"' to initialize data")
             
             self.shape = self._matrix_lil.shape
+            if not format_override:
+                assert isinstance(self._matrix_lil, sparse.lil_matrix)
             return
         
         self.shape = shape
@@ -61,6 +73,7 @@ class matrix_sparse:
             return
         
         self._matrix_lil = sparse.lil_matrix(self.shape, dtype=dtype)
+        assert isinstance(self._matrix_lil, sparse.lil_matrix)
     
     
     def __getitem__(self, key):
@@ -68,7 +81,7 @@ class matrix_sparse:
             retval = self._matrix_lil[key]
             if isinstance(retval, float):
                 return retval
-            
+
             return matrix_sparse(_data = retval)
             #print(type(self._matrix_lil[key]))
             #return self._matrix_lil[key]
@@ -96,55 +109,64 @@ class matrix_sparse:
             self._matrix_lil[key] = data
             return self
         
-        raise Exception("TODO")
-        return self
+        raise Exception("Shouldn't happen")
+    
+    
+    def getrow_asarray(self, idx):
+        return self._matrix_lil[idx,:]
+    
+    
+    def getcol_asarray(self, idx):
+        return self._matrix_lil[:,idx].toarray()[:,0]
+    
     
     def __add__(self, data):
-        return matrix_sparse(_data = self._matrix_lil + data)
-    
-    def __sub__(self, data, datab):
-        return matrix_sparse(_data = data - datab)
-    
-    def __iadd__(self, data):
-        if isinstance(data, float) or isinstance(data, int):
-            mdata = sparse.lil_matrix(self._matrix_lil.toarray() + data)
-            return matrix_sparse(_data = mdata)
+        assert isinstance(self._matrix_lil, sparse.lil_matrix)
         
-        if isinstance(data, matrix_sparse):
-            d = sparse.lil_matrix(self._matrix_lil + data._matrix_lil)
-            return matrix_sparse(_data = d)
-        
-        raise Exception("TODO")
+        mdata = self._matrix_lil + data._matrix_lil
         return matrix_sparse(_data = mdata)
     
-    def __isub__(self, data):
-        if isinstance(data, float) or isinstance(data, int):
-            mdata = sparse.csr_matrix(self._matrix_lil.toarray() - data)
-            return matrix_sparse(_data = mdata)
-        
+    
+    def __iadd__(self, data):
         if isinstance(data, matrix_sparse):
-            d = sparse.lil_matrix(self._matrix_lil - data._matrix_lil)
-            return matrix_sparse(_data = d)
+            self._matrix_lil -= data._matrix_lil
+            """
+            Important: Do not do any conversions to lil here because of performance reasons
+            This would slow this down extremely
+            """
+            return self
         
-        if isinstance(data, np.ndarray):
-            mdata = sparse.lil_matrix(self._matrix_lil - data)
-            return matrix_sparse(_data = mdata)
+        raise Exception("Shouldn't happen")
+    
+    
+    def __sub__(self, data):
+        assert isinstance(self._matrix_lil, sparse.lil_matrix)
+
+        mdata = self._matrix_lil - data._matrix_lil
+        return matrix_sparse(_data = mdata)
+    
+    
+    def __isub__(self, data):
+        if isinstance(data, matrix_sparse):
+            self._matrix_lil -= data._matrix_lil
+            return self
         
-        return matrix_sparse(_data = self._matrix_lil - data)
+        raise Exception("Shouldn't happen")
+    
     
     def __truediv__(self, data):
         if isinstance(data, float) or isinstance(data, int):
             return matrix_sparse(_data = self._matrix_lil/data)
         
-        raise Exception("TODO")
-        return matrix_sparse(_data = self._matrix_lil/data)
+        raise Exception("Shouldn't happen")
+    
     
     def __mul__(self, data):
         if isinstance(data, float) or isinstance(data, int):
             return matrix_sparse(_data = self._matrix_lil*data)
-        
-        raise Exception("TODO")
-        return matrix_sparse(_data = self._matrix_lil*data)
+
+        raise Exception("Shouldn't happen")
+    
     
     def reduce_min(self):
         return np.min(self._matrix_lil)
@@ -155,7 +177,21 @@ class matrix_sparse:
    
     def kron(self, data):
         if isinstance(data, matrix_sparse):
-            m = sparse.lil_matrix(sparse.kron(self._matrix_lil, data._matrix_lil))
+            if 1:
+                m = sparse.kron(self._matrix_lil, data._matrix_lil)
+                
+                """
+                Important: Do not do any conversions to lil here because of performance reasons
+                This would slow this down extremely
+                """
+                return matrix_sparse(_data = m, format_override=True)
+            
+            else:
+                a = sparse.csr_matrix(self._matrix_lil)
+                b = sparse.csr_matrix(data._matrix_lil)
+                k = sparse.kron(a, b)
+                m = sparse.lil_matrix(k)
+                
             return matrix_sparse(_data = m)
         
         raise Exception("Unsupported type data '"+str(type(data))+"'")
@@ -186,8 +222,12 @@ class matrix_sparse:
 
         if isinstance(data, matrix_sparse):
             d = self._matrix_lil.dot(data._matrix_lil)
-            d = sparse.lil_matrix(d)
-            return matrix_sparse(_data = d)
+            #d = sparse.lil_matrix(d)
+            """
+            Important: Do not do any conversions to lil here because of performance reasons
+            This would slow this down extremely
+            """
+            return matrix_sparse(_data = d, format_override=True)
         
         raise Exception("Unsupported type data '"+str(type(data))+"'")
 
@@ -206,6 +246,10 @@ class matrix_sparse:
 
 
 def eye_sparse(shape):
-    return matrix_sparse(_data=sparse.eye(shape, format='lil'))
+    """
+    Performance bug: creating LIL eye matrices is extremely slow!
+    Therefore, we switch to CSR here.
+    """
+    return matrix_sparse(_data=sparse.eye(shape, format='csr'), format_override=True)
 
 

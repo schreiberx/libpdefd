@@ -1,6 +1,7 @@
 from libpdefd.core.gridinfo import *
 import libpdefd.core.variable as variable
 import libpdefd.core.fd_weights_explicit as fdwe
+import time
 
 import libpdefd.array_matrix.libpdefd_matrix_setup as matrix_setup
 import libpdefd.array_matrix.libpdefd_matrix_compute as matrix_compute
@@ -954,10 +955,10 @@ class OperatorDiff1D(_operator_base):
             First, handle boundary conditions at the beginning of the domain
             """
             if src_grid.boundaries[0].type == "dirichlet":
-                # Getting a column as an array is a little bit more tricky with sp.sparse
-                col = self._L_sparse_setup[:,0].to_numpy_array()[:,0]
+                col = self._L_sparse_setup.getcol_asarray(0)
                 self._c += col*src_grid.boundaries[0].dirichlet_value
                 self._L_sparse_setup = self._L_sparse_setup[:,1:]
+                assert isinstance(self._L_sparse_setup, matrix_setup.matrix_sparse)
             
             elif src_grid.boundaries[0].type == "neumann_extrapolated":
                 
@@ -1009,10 +1010,11 @@ class OperatorDiff1D(_operator_base):
             Second, handle boundary conditions at the end of the domain
             """
             if src_grid.boundaries[1].type == "dirichlet":
-                col = self._L_sparse_setup[:,-1].to_numpy_array()[:,0]
-                self._c += col*src_grid.boundaries[1].dirichlet_value
+                row = self._L_sparse_setup.getcol_asarray(-1)
+                self._c += row*src_grid.boundaries[1].dirichlet_value
                 
                 self._L_sparse_setup = self._L_sparse_setup[:,:-1]
+                assert isinstance(self._L_sparse_setup, matrix_setup.matrix_sparse)
             
             elif src_grid.boundaries[1].type == "neumann_extrapolated":
 
@@ -1168,10 +1170,8 @@ class OperatorDiffND(_operator_base):
             
             for i in range(0, i_dim):
                 M = matrix_setup.eye_sparse(dst_grid.shape[i])
-                #retm = sparse.kron(retm, M)
                 retm = retm.kron(M)
             
-            #retm = sparse.kron(retm, L)
             retm = retm.kron(L)
             
             for i in range(i_dim+1, num_dims):
@@ -1205,6 +1205,7 @@ class OperatorDiffND(_operator_base):
         total_src_N = np.prod(src_grid.shape)
         total_dst_N = np.prod(dst_grid.shape)
         
+        
         self._L_sparse_setup = matrix_setup.eye_sparse(total_src_N)
         self._c = libpdefd_array.array_zeros(total_src_N)
         
@@ -1224,13 +1225,14 @@ class OperatorDiffND(_operator_base):
             If the derivative shouldn't be computed along a particular dimension,
             we only use an interpolation
             """
+            
             diff_op = OperatorDiff1D(
                     diff_order = self._diff_order if dim == diff_dim else 0,        # Differentiation or interpolation?
                     min_approx_order = min_approx_order,
                     dst_grid = dst_grid[dim],
                     src_grid = src_grid[dim]
                 )
-            
+        
             if assert_aligned:
                 if dim != diff_dim:
                     if np.any(dst_grid.shape[dim] != src_grid.shape[dim]):
@@ -1254,10 +1256,11 @@ class OperatorDiffND(_operator_base):
             """
             Setup operator matrix and 'c' vector which assumes all dimensions up to 'dim' have been already processed.
             """
+            
             BL = get_bcast_matrix_L(diff_op._L_sparse_setup, dim)
             
-            
             Bc = get_bcast_matrix_c(diff_op._c, dim)
+            
             
             if 0:
                 print("diff_op._L_sparse_setup", diff_op._L_sparse_setup.to_numpy_array().shape)
@@ -1272,6 +1275,7 @@ class OperatorDiffND(_operator_base):
             else:
                 self._L_sparse_setup = BL.dot(self._L_sparse_setup)
                 self._c = BL.dot(self._c) + Bc
+            
             
             if self._L_sparse_setup.shape[0] != self._c.shape[0]:
                 print("Internal Error")
@@ -1289,7 +1293,6 @@ class OperatorDiffND(_operator_base):
                 
             ndofs = np.prod(dst_grid.shape)
             assert self._L_sparse_setup.shape[0] == self._c.shape[0], "Internal Error"
-        
         
         assert self._L_sparse_setup.shape[0] == self._c.shape[0], "Internal Error"
         assert self._L_sparse_setup.shape[0] == np.prod(dst_grid.shape), "Internal Error"
