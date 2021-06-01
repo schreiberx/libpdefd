@@ -66,7 +66,7 @@ for num_dims in [2,3,4]:
                         min_approx_order = min_spatial_approx_order,
                         src_grid = rho_grid,
                         dst_grid = rho_grid,
-                    ) for i in range(num_dims)]
+                    ).bake() for i in range(num_dims)]
         
         var = libpdefd.VariableND(rho_grid)
         var += sim_var_avg

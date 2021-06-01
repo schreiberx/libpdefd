@@ -331,7 +331,7 @@ for (boundary_src, boundary_dst, boundary_src_right, boundary_dst_right) in iter
                 
             if boundary_src_right == "symmetric":
                 assert np.isclose(test_fun(domain_end, 1), 0)
-        
+            
             
             def get_bc(boundary_type, boundary_type_right, test_fun):
                 
@@ -483,7 +483,7 @@ for (boundary_src, boundary_dst, boundary_src_right, boundary_dst_right) in iter
                     min_approx_order = min_approx_order,    # Approximation order
                     src_grid=src_grid,      # Source variable to compute differential on
                     dst_grid=dst_grid,      # Destination variable to compute differential for
-                )
+                ).bake()
                 
                 real_approx_order_equispaced = u_diff.real_approx_order_equispaced
                 
