@@ -2,7 +2,8 @@ from libpdefd.core.gridinfo import *
 import libpdefd.core.variable as variable
 import libpdefd.core.fd_weights_explicit as fdwe
 
-import libpdefd.array_matrix.libpdefd_matrix as matrix
+import libpdefd.array_matrix.libpdefd_matrix_setup as matrix_setup
+import libpdefd.array_matrix.libpdefd_matrix_compute as matrix_compute
 import libpdefd.array_matrix.libpdefd_array as libpdefd_array
 
 
@@ -35,7 +36,7 @@ class _operator_base:
         """
         Bake setup matrix to one which is computationally efficient
         """
-        self._L_sparse_compute = matrix.matrix_sparse_for_compute(self._L_sparse_setup)
+        self._L_sparse_compute = matrix_compute.matrix_sparse(self._L_sparse_setup)
         self._L_sparse_setup = None 
         return self
 
@@ -840,7 +841,7 @@ class OperatorDiff1D(_operator_base):
         Note, that all src grid points are included here and that boundary conditions are coped with later on.
         This makes it more flexible.
         """
-        self._L_sparse_setup = matrix.matrix_sparse_for_setup((dst_grid.num_dofs, src_grid.num_stencil_grid_points))
+        self._L_sparse_setup = matrix_setup.matrix_sparse((dst_grid.num_dofs, src_grid.num_stencil_grid_points))
         
         """
         Iterate over all points on destination field.
@@ -1163,10 +1164,10 @@ class OperatorDiffND(_operator_base):
             """
             Generate matrix with the linear operator 'L' in it
             """
-            retm = matrix.matrix_sparse_for_setup(np.array([1]))
+            retm = matrix_setup.matrix_sparse(np.array([1]))
             
             for i in range(0, i_dim):
-                M = matrix.eye_setup(dst_grid.shape[i])
+                M = matrix_setup.eye_sparse(dst_grid.shape[i])
                 #retm = sparse.kron(retm, M)
                 retm = retm.kron(M)
             
@@ -1174,7 +1175,7 @@ class OperatorDiffND(_operator_base):
             retm = retm.kron(L)
             
             for i in range(i_dim+1, num_dims):
-                M = matrix.eye_setup(src_grid.shape[i])
+                M = matrix_setup.eye_sparse(src_grid.shape[i])
                 #retm = sparse.kron(retm, M)
                 retm = retm.kron(M)
             
@@ -1204,7 +1205,7 @@ class OperatorDiffND(_operator_base):
         total_src_N = np.prod(src_grid.shape)
         total_dst_N = np.prod(dst_grid.shape)
         
-        self._L_sparse_setup = matrix.eye_setup(total_src_N)
+        self._L_sparse_setup = matrix_setup.eye_sparse(total_src_N)
         self._c = libpdefd_array.array_zeros(total_src_N)
         
         if 0:
@@ -1239,7 +1240,7 @@ class OperatorDiffND(_operator_base):
                         raise Exception("Grid in dimension "+str(dim)+" doesn't match, please check")
                     
                     # abs is natively supported, but max isn't
-                    err = abs(diff_op._L_sparse_setup - matrix.eye_setup(np.product(dst_grid[dim].num_dofs))).reduce_max()
+                    err = abs(diff_op._L_sparse_setup - matrix_setup.eye_sparse(np.product(dst_grid[dim].num_dofs))).reduce_max()
                     if err > 1e-10*(abs(diff_op._L_sparse_setup).reduce_max()):
                         print("*"*80)
                         print("* ERROR")

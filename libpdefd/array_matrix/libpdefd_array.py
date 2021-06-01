@@ -122,10 +122,8 @@ class _array_base:
         return self.__class__(self._data.copy())
     
     def __str__(self):
-        retstr = ""
+        retstr = "PYSMarray: "
         retstr += str(self.shape)
-        retstr += "\n"
-        retstr += str(self._data)
         return retstr
     
     def abs(self):
