@@ -9,11 +9,11 @@ import time
 Use this hack to use these python files also without libpdefd
 """
 try:
-    import libpdefd.array_matrix.libpdefd_array as libpdefd_array
+    import libpdefd.array_matrix.libpdefd_vector_array as libpdefd_vector_array
 except:
     import sys, os
     sys.path.append(os.path.dirname(__file__))
-    import libpdefd_array as libpdefd_array
+    import libpdefd_vector_array as libpdefd_vector_array
     sys.path.pop()
 
 
@@ -204,13 +204,13 @@ class matrix_sparse:
         by reshaping 'x' so that it fits the number of rows in 'M'
         """
         
-        if isinstance(data, libpdefd_array._array_base):
+        if isinstance(data, libpdefd_vector_array._vector_array_base):
             """
-            If input is an ndarray, return also an libpdefd_array
+            If input is an ndarray, return also an libpdefd_vector_array
             """
             d = self._matrix_lil.dot(data._data)
             assert isinstance(d, np.ndarray)
-            return libpdefd_array.array(d)
+            return libpdefd_vector_array.vector_array(d)
         
         if isinstance(data, np.ndarray) and False:
             """

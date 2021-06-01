@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import libpdefd
 
-from libpdefd.array_matrix.libpdefd_array import *
+from libpdefd.array_matrix.libpdefd_vector_array import *
 
 
 import simconfig_a
@@ -146,8 +146,8 @@ def dU_dt(U):
 """
 Setup initial conditions
 """
-rho = array_zeros_like(rho_grid.x_dofs)
-vel = array_zeros_like(vel_grid.x_dofs)
+rho = vector_array_zeros_like(rho_grid.x_dofs)
+vel = vector_array_zeros_like(vel_grid.x_dofs)
 
 ic_center = 0.75*(simconfig.domain_start + simconfig.domain_end)
 

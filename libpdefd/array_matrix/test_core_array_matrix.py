@@ -7,14 +7,14 @@ import time
 Use this hack to use these python files also without libpdefd
 """
 try:
-    import libpdefd.array_matrix.libpdefd_array as libpdefd_array
+    import libpdefd.array_matrix.libpdefd_vector_array as libpdefd_vector_array
     import libpdefd.array_matrix.libpdefd_matrix_setup as libpdefd_matrix_setup
     import libpdefd.array_matrix.libpdefd_matrix_compute as libpdefd_matrix_compute
     
 except:
     import sys, os
     sys.path.append(os.path.dirname(__file__))
-    import libpdefd_array as libpdefd_array
+    import libpdefd_vector_array as libpdefd_vector_array
     import libpdefd_matrix_setup as libpdefd_matrix_setup
     import libpdefd_matrix_compute as libpdefd_matrix_compute
     sys.path.pop()
@@ -42,7 +42,7 @@ print("")
 print("*"*80)
 print("Array A")
 print("*"*80)
-a = libpdefd_array.array_zeros((N,N+1,N+2))
+a = libpdefd_vector_array.array_zeros((N,N+1,N+2))
 al = a.num_elements()
 
 for z in range(a.shape[0]):
@@ -58,7 +58,7 @@ print("")
 print("*"*80)
 print("Array B")
 print("*"*80)
-b = libpdefd_array.array_zeros((N+2,N+3,N+4))
+b = libpdefd_vector_array.array_zeros((N+2,N+3,N+4))
 bl = b.num_elements()
 
 for z in range(b.shape[0]):

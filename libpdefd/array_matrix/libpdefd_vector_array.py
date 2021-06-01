@@ -1,9 +1,13 @@
 import numpy as np
-import scipy as sp
-import scipy.sparse as sparse
 
 
-class _array_base:
+"""
+The vector array class is one which
+ * stores multi-dimensional array data representing spatial information and
+ * allows efficient matrix-vector multiplications
+"""
+
+class _vector_array_base:
     """
     Array container to store varying data during simulation
     
@@ -146,7 +150,7 @@ class _array_base:
         return self.__class__(self._data.copy())
     
     def kron(self, data):
-        assert isinstance(data, _array_base)
+        assert isinstance(data, _vector_array_base)
         d = np.kron(self._data, data._data)
         return self.__class__(d)
     
@@ -168,15 +172,15 @@ class _array_base:
 
 
 
-def array(param, dtype=None, *args, **kwargs):
-    retval = _array_base()
+def vector_array(param, dtype=None, *args, **kwargs):
+    retval = _vector_array_base()
         
     if isinstance(param, np.ndarray):
         retval._data = np.copy(param)
         retval.shape = param.shape
         return retval
     
-    if isinstance(param, _array_base):
+    if isinstance(param, _vector_array_base):
         retval._data = np.copy(param._data)
         retval.shape = param.shape
         return retval
@@ -189,28 +193,28 @@ def array(param, dtype=None, *args, **kwargs):
     raise Exception("Type '"+str(type(param))+"' of param not supported")
 
 
-def array_zeros(shape, dtype=None):
+def vector_array_zeros(shape, dtype=None):
     """
     Return array of shape with zeros
     """
-    retval = _array_base()
+    retval = _vector_array_base()
     retval._data = np.zeros(shape, dtype=dtype)
     retval.shape = retval._data.shape
     return retval
 
 
-def array_zeros_like(data, dtype=None):
+def vector_array_zeros_like(data, dtype=None):
     """
     Return zero array of same shape as data
     """
-    return array_zeros(data.shape, dtype=dtype)
+    return vector_array_zeros(data.shape, dtype=dtype)
 
 
-def array_ones(shape, dtype=None):
+def vector_array_ones(shape, dtype=None):
     """
     Return array of shape with ones
     """
-    retval = _array_base()
+    retval = _vector_array_base()
     retval._data = np.ones(shape, dtype=dtype)
     retval.shape = retval._data.shape
     return retval

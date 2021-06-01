@@ -5,7 +5,7 @@ import time
 
 import libpdefd.array_matrix.libpdefd_matrix_setup as matrix_setup
 import libpdefd.array_matrix.libpdefd_matrix_compute as matrix_compute
-import libpdefd.array_matrix.libpdefd_array as libpdefd_array
+import libpdefd.array_matrix.libpdefd_vector_array as libpdefd_vector_array
 
 
 
@@ -93,11 +93,11 @@ class _operator_base:
             data = self._L_sparse_compute.dot_add_reshape(x._data, self._c, self._dst_grid.shape)
             return variable._VariableND_Base(data)
         
-        elif isinstance(x, libpdefd_array._array_base):
+        elif isinstance(x, libpdefd_vector_array._vector_array_base):
             assert self._L_sparse_compute.shape[0] == self._c.shape[0]
             
             data = self._L_sparse_compute.dot_add_reshape(x, self._c, self._dst_grid.shape)
-            return libpdefd_array._array_base(data = data)
+            return libpdefd_vector_array._vector_array_base(data = data)
         
         elif isinstance(x, np.ndarray):
             assert len(x.shape) == 1
@@ -930,7 +930,7 @@ class OperatorDiff1D(_operator_base):
             u = A*x + c
         and we allocate 'c' next.
         """
-        self._c = libpdefd_array.array_zeros(dst_grid.num_dofs)
+        self._c = libpdefd_vector_array.vector_array_zeros(dst_grid.num_dofs)
         
         if 0:
             np.set_printoptions(linewidth=180)
@@ -1186,16 +1186,16 @@ class OperatorDiffND(_operator_base):
             """
             Generate matrix with which we can bcast the 'c' boundary conditions
             """
-            retm = libpdefd_array.array([1], dtype='float')
+            retm = libpdefd_vector_array.vector_array([1], dtype='float')
             
             for i in range(0, i_dim):
-                M = libpdefd_array.array_ones(dst_grid.shape[i])
+                M = libpdefd_vector_array.vector_array_ones(dst_grid.shape[i])
                 retm = retm.kron(M)
                 
             retm = retm.kron(c)
             
             for i in range(i_dim+1, num_dims):
-                M = libpdefd_array.array_ones(src_grid.shape[i])
+                M = libpdefd_vector_array.vector_array_ones(src_grid.shape[i])
                 
                 retm = retm.kron(M)
 
@@ -1207,7 +1207,7 @@ class OperatorDiffND(_operator_base):
         
         
         self._L_sparse_setup = matrix_setup.eye_sparse(total_src_N)
-        self._c = libpdefd_array.array_zeros(total_src_N)
+        self._c = libpdefd_vector_array.vector_array_zeros(total_src_N)
         
         if 0:
             print("self._L_sparse_setup: "+str(self._L_sparse_setup.to_numpy_array().shape))

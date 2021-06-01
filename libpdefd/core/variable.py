@@ -1,6 +1,6 @@
 import numpy as np
 from libpdefd.core.gridinfo import *
-import libpdefd.array_matrix.libpdefd_array as libpdefd_array
+import libpdefd.array_matrix.libpdefd_vector_array as libpdefd_vector_array
 
 
 class _VariableND_Base:
@@ -173,16 +173,16 @@ class _VariableND_Base:
         
         elif isinstance(a, np.ndarray):
             assert self.shape == a.shape, "Shape mismatch: "+str(self.shape)+" != "+str(a.shape)
-            self._data = libpdefd_array.array(a)
+            self._data = libpdefd_vector_array.vector_array(a)
             
-        elif isinstance(a, libpdefd_array._array_base):
+        elif isinstance(a, libpdefd_vector_array._vector_array_base):
             assert self.shape == a.shape, "Shape mismatch: "+str(self.shape)+" != "+str(a.shape)
-            self._data = libpdefd_array.array(a)
+            self._data = libpdefd_vector_array.vector_array(a)
             
         else:
             raise Exception("Type '"+str(type(a))+"' not supported")
 
-        assert isinstance(self._data, libpdefd_array._array_base)
+        assert isinstance(self._data, libpdefd_vector_array._vector_array_base)
 
     
     def set_all(
@@ -196,7 +196,7 @@ class _VariableND_Base:
         """
         Return numpy array
         """
-        assert isinstance(self._data, libpdefd_array._array_base)
+        assert isinstance(self._data, libpdefd_vector_array._vector_array_base)
         return self._data.to_numpy_array()
 
     def __str__(self):
@@ -218,18 +218,18 @@ def VariableND(
     retval._name = name
     
     if isinstance(data_or_grid, GridInfoND) or isinstance(data_or_grid, GridInfo1D):
-        retval._data = libpdefd_array.array_zeros(data_or_grid.shape)
+        retval._data = libpdefd_vector_array.vector_array_zeros(data_or_grid.shape)
 
     elif isinstance(data_or_grid, np.ndarray):
-        retval._data = libpdefd_array.array(data_or_grid)
+        retval._data = libpdefd_vector_array.vector_array(data_or_grid)
 
-    elif isinstance(data_or_grid, libpdefd_array._array_base):
-        retval._data = libpdefd_array.array(data_or_grid)
+    elif isinstance(data_or_grid, libpdefd_vector_array._vector_array_base):
+        retval._data = libpdefd_vector_array.vector_array(data_or_grid)
         
     else:
         raise Exception("Type '"+str(type(data_or_grid))+" not supported")
 
-    assert isinstance(retval._data, libpdefd_array._array_base)
+    assert isinstance(retval._data, libpdefd_vector_array._vector_array_base)
     
     retval.shape = retval._data.shape
     
@@ -256,10 +256,10 @@ class VariableND(_VariableND_Base):
         self.shape = self.grid.shape
         
         if self._data is None:
-            self._data = libpdefd_array.array_zeros(self.shape)
+            self._data = libpdefd_vector_array.vector_array_zeros(self.shape)
             #self._data = np.zeros(self.shape)
     
-        assert isinstance(self._data, libpdefd_array._array_base)
+        assert isinstance(self._data, libpdefd_vector_array._vector_array_base)
     
             
     def __str__(self):

@@ -8,12 +8,12 @@ import sys
 Use this hack to use these python files also without libpdefd
 """
 try:
-    import libpdefd.array_matrix.libpdefd_array as libpdefd_array
+    import libpdefd.array_matrix.libpdefd_vector_array as libpdefd_vector_array
     import libpdefd.array_matrix.libpdefd_matrix_setup as libpdefd_matrix_setup
 except:
     import sys, os
     sys.path.append(os.path.dirname(__file__))
-    import libpdefd_array as libpdefd_array
+    import libpdefd_vector_array as libpdefd_vector_array
     import libpdefd_matrix_setup as libpdefd_matrix_setup
     sys.path.pop()
 
@@ -58,20 +58,6 @@ class matrix_sparse:
         raise Exception("Unsupported type data '"+str(type(data))+"'")
     
     
-    def __iadd__(self, data):
-        if isinstance(data, matrix_sparse):
-            self._matrix_csr += data._matrix_csr
-            return self
-
-        raise Exception("Unsupported type data '"+str(type(data))+"'")
-    
-    def __isub__(self, data):
-        if isinstance(data, matrix_sparse):
-            self._matrix_csr -= data._matrix_csr
-            return self
-
-        raise Exception("Unsupported type data '"+str(type(data))+"'")
-    
     def __str__(self):
         retstr = ""
         retstr += "PYSMmatrixcompute: "
@@ -88,13 +74,13 @@ class matrix_sparse:
         by reshaping 'x' so that it fits the number of rows in 'M'
         """
         
-        if isinstance(data, libpdefd_array._array_base):
+        if isinstance(data, libpdefd_vector_array._vector_array_base):
             """
-            If input is an ndarray, return also an libpdefd_array
+            If input is an ndarray, return also an libpdefd_vector_array
             """
             d = self._matrix_csr.dot(data._data)
             assert isinstance(d, np.ndarray)
-            return libpdefd_array.array(d)
+            return libpdefd_vector_array.vector_array(d)
         
         if isinstance(data, np.ndarray) and False:
             """
@@ -120,9 +106,9 @@ class matrix_sparse:
         if type(x) != type(c):
             raise Exception("x and c must have same type")
         
-        if isinstance(x, libpdefd_array._array_base):
+        if isinstance(x, libpdefd_vector_array._vector_array_base):
             d = self._matrix_csr.dot(x._data) + c._data
-            return libpdefd_array.array(d)
+            return libpdefd_vector_array.vector_array(d)
         
         if isinstance(x, np.ndarray) and False:
             d = self._matrix_csr.dot(x) + c
@@ -148,11 +134,11 @@ class matrix_sparse:
         if type(x) != type(c):
             raise Exception("x and c must have same type")
         
-        if isinstance(x, libpdefd_array._array_base):
+        if isinstance(x, libpdefd_vector_array._vector_array_base):
             d = (self._matrix_csr.dot(x._data.flatten()) + c._data).reshape(dst_shape)
             
             assert isinstance(d, np.ndarray)
-            return libpdefd_array.array(d)
+            return libpdefd_vector_array.vector_array(d)
         
         if isinstance(x, np.ndarray) and False:
             """
