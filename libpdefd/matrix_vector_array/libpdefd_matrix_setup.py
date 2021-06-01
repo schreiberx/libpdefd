@@ -9,7 +9,7 @@ import time
 Use this hack to use these python files also without libpdefd
 """
 try:
-    import libpdefd.array_matrix.libpdefd_vector_array as libpdefd_vector_array
+    import libpdefd.matrix_vector_array.libpdefd_vector_array as libpdefd_vector_array
 except:
     import sys, os
     sys.path.append(os.path.dirname(__file__))

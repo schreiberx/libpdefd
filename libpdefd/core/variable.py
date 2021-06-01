@@ -1,6 +1,6 @@
 import numpy as np
 from libpdefd.core.gridinfo import *
-import libpdefd.array_matrix.libpdefd_vector_array as libpdefd_vector_array
+import libpdefd.matrix_vector_array.libpdefd_vector_array as libpdefd_vector_array
 
 
 class _VariableND_Base:

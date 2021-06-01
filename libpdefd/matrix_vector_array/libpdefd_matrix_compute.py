@@ -8,8 +8,8 @@ import sys
 Use this hack to use these python files also without libpdefd
 """
 try:
-    import libpdefd.array_matrix.libpdefd_vector_array as libpdefd_vector_array
-    import libpdefd.array_matrix.libpdefd_matrix_setup as libpdefd_matrix_setup
+    import libpdefd.matrix_vector_array.libpdefd_vector_array as libpdefd_vector_array
+    import libpdefd.matrix_vector_array.libpdefd_matrix_setup as libpdefd_matrix_setup
 except:
     import sys, os
     sys.path.append(os.path.dirname(__file__))

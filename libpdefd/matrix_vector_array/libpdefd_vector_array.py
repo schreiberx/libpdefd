@@ -2,9 +2,9 @@ import numpy as np
 
 
 """
-The vector array class is one which
+The vector-array class is one which
  * stores multi-dimensional array data representing spatial information and
- * allows efficient matrix-vector multiplications
+ * allows efficient matrix-vector multiplications with the compute matrix class
 """
 
 class _vector_array_base:

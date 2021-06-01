@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import libpdefd
 
-from libpdefd.array_matrix.libpdefd_vector_array import *
+from libpdefd.matrix_vector_array.libpdefd_vector_array import *
 
 
 import simconfig_a

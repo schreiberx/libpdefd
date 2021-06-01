@@ -6,7 +6,6 @@ import libpdefd
 import argparse
 
 
-
 class SimConfig:
     
     def __init__(self, num_dims = 1):

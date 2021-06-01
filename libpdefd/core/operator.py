@@ -3,9 +3,9 @@ import libpdefd.core.variable as variable
 import libpdefd.core.fd_weights_explicit as fdwe
 import time
 
-import libpdefd.array_matrix.libpdefd_matrix_setup as matrix_setup
-import libpdefd.array_matrix.libpdefd_matrix_compute as matrix_compute
-import libpdefd.array_matrix.libpdefd_vector_array as libpdefd_vector_array
+import libpdefd.matrix_vector_array.libpdefd_matrix_setup as matrix_setup
+import libpdefd.matrix_vector_array.libpdefd_matrix_compute as matrix_compute
+import libpdefd.matrix_vector_array.libpdefd_vector_array as libpdefd_vector_array
 
 
 
