@@ -14,17 +14,12 @@ def time_integrator_forward_euler(f, u, dt):
 def time_integrator_RK4(f, u, dt):
     
     k1 = f(u)
-    print(k1)
-    print(k1*(dt*0.5))
     
     k2 = f(u + k1*(dt*0.5))
-    print(k2)
     
     k3 = f(u + k2*(dt*0.5))
-    print(k3)
     
     k4 = f(u + k3*dt)
-    print(k4)
     
     # u + 1/6*dt * (k1 + 2*k2 + 2*k3 + k4)
     return u + (k1 + k2*2 + k3*2 + k4)*(1/6*dt)

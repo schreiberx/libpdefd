@@ -330,7 +330,7 @@ class SimConfig:
         """
         Number of time steps
         """
-        self.num_timesteps = 10000
+        self.num_timesteps = None
 
         """
         Test run
@@ -439,9 +439,15 @@ class SimConfig:
         self.test_run = str2bool(self.test_run)
         
         if self.test_run:
-            self.num_timesteps = 10
             
             self.benchmark_name = "vertical_straka"
+            self.num_timesteps = 10
+            
+            self.dt_scaling = 0.001
+            self.cell_res = np.array([256, 64])
+            self.min_spatial_approx_order = 4
+            
+            self.output_text_freq = 1
         
     
     def compute_p0_ideal_gas(self):

@@ -71,6 +71,17 @@ dt *= 0.001
 
 
 """
+Number of time steps
+"""
+if simconfig.num_timesteps == None:
+    if simconfig.sim_time != None:
+        simconfig.num_timesteps = int(round(simconfig.sim_time/dt))
+    else:
+        simconfig.num_timesteps = None
+
+
+
+"""
 Setup boundaries
 """
 def get_boundaries(boundary_condition, value_bottom, value_top):

@@ -227,10 +227,11 @@ if plot_generate:
         vis.show(block=False)
 
 
-if simconfig.sim_time != None:
-    num_total_timesteps = int(simconfig.sim_time/dt)
-else:
-    num_total_timesteps = None
+if simconfig.num_timesteps == None:
+    if simconfig.sim_time != None:
+        simconfig.num_timesteps = int(round(simconfig.sim_time/dt))
+    else:
+        simconfig.num_timesteps = None
 
 
 
@@ -252,15 +253,14 @@ while True:
     if simconfig.output_text_freq > 0:
         if num_timestep % simconfig.output_text_freq == 0:
         
-            if simconfig.verbosity >= 1:
-                print("timestep: "+str(num_timestep))
-                print(" + simtime: "+str(simtime))
-                
-                time_current = time.time()
-                
-                if num_timestep != 0:
-                    seconds_per_timestep = (time_current - time_start)/num_timestep
-                    print(" + seconds_per_timestep: "+str(seconds_per_timestep))
+            print("timestep: "+str(num_timestep))
+            print(" + simtime: "+str(simtime))
+            
+            time_current = time.time()
+            
+            if num_timestep != 0:
+                seconds_per_timestep = (time_current - time_start)/num_timestep
+                print(" + seconds_per_timestep: "+str(seconds_per_timestep))
             
             if simconfig.verbosity >= 2:
                 for varname in ['u', 'w', 'p', 'rho', 't']:
@@ -292,8 +292,8 @@ while True:
             do_file_pickle(num_timestep, simtime)
 
     
-    if num_total_timesteps != None:
-        if num_timestep >= num_total_timesteps:
+    if simconfig.num_timesteps != None:
+        if num_timestep >= simconfig.num_timesteps:
             break
     
     if simconfig.time_integrator == "leapfrog":
@@ -306,7 +306,7 @@ while True:
 
     else:
         U = libpdefd.tools.time_integrator(simconfig.time_integrator, simpde.dU_dt, U, dt)
-    
+        
     num_timestep += 1
     simtime += dt
     
@@ -321,7 +321,7 @@ while True:
 time_end = time.time()
 print("Time: "+str(time_end-time_start))
 
-total_seconds_per_timestep = (time_end - time_start)/num_timestep
+total_seconds_per_timestep = (time_end - time_start)/float(num_timestep)
 print(" + total_seconds_per_timestep: "+str(seconds_per_timestep))
 
 if simconfig.gui:
