@@ -300,9 +300,8 @@ for the pressure by
 \begin_layout Standard
 \begin_inset Formula 
 \begin{align*}
-\overline{p} & =p_{0}\left(\overline{T}T_{s}^{-1}\right)^{R/C_{p}}\,\,\,\textbf{WARNING! THIS IS WRONG!}\\
- & =p_{0}\left(\overline{T}T_{s}^{-1}\right)^{C_{p}/R}\,\,\,\textbf{\text{THIS IS RIGHT!}}\\
- & =p_{0}\left(\overline{T}T_{s}^{-1}\right)^{\kappa}
+\overline{p} & =p_{0}\left(\overline{T}T_{s}^{-1}\right)^{C_{p}/R}\\
+ & =p_{0}\left(\overline{T}T_{s}^{-1}\right)^{1/\kappa}
 \end{align*}
 
 \end_inset
@@ -311,7 +310,12 @@ with
 \begin_inset Formula $\kappa=R/C_{p}$
 \end_inset
 
- and we get the density by the ideal gas equation
+.
+ Note, that the equation 
+\begin_inset Formula $p_{0}\left(\overline{T}T_{s}^{-1}\right)^{R/C_{p}}$
+\end_inset
+
+ in the Straka paper is wrong! The density is given by the ideal gas equation
 \begin_inset Formula 
 \[
 \overline{\rho}=\overline{p}\left(R\overline{T}\right)^{-1}.
@@ -335,37 +339,22 @@ Next, we show that the equations are in hydrostatic balance
 
 \end_inset
 
-holds for the equations above and we get
+holds for the equations above (revealing the above-mentioned typo in the
+ Straka paper) and we get
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \begin{eqnarray}
-\frac{d}{dz}\left(p_{0}\left(\overline{T}T_{s}^{-1}\right)^{\kappa}\right) & = & -\overline{\rho}g\\
-p_{0}T_{s}^{-\kappa}\frac{d}{dz}\left(\overline{T}^{\kappa}\right) & = & -\overline{\rho}g\\
-p_{0}T_{s}^{-\kappa}\kappa\left(\overline{T}{}^{\kappa-1}\right)\frac{d}{dz}\overline{T} & = & -\frac{\overline{p}}{R\overline{T}}g\\
-\overline{T}Rp_{0}T_{s}^{-\kappa}\kappa\left(\overline{T}{}^{\kappa-1}\right)gC_{p}^{-1} & = & \overline{p}g\\
-Rp_{0}T_{s}^{-\kappa}\kappa\left(\overline{T}{}^{\kappa}\right)C_{p}^{-1} & = & \overline{p}\\
-Rp_{0}T_{s}^{-\kappa}\kappa\left(\overline{T}{}^{\kappa}\right)C_{p}^{-1} & = & p_{0}\left(\overline{T}T_{s}^{-1}\right)^{\kappa}\\
-\left(R/C_{p}\right)\kappa & = & 1.
+\frac{d}{dz}\left(p_{0}\left(\overline{T}T_{s}^{-1}\right)^{\alpha}\right) & = & -\overline{\rho}g\\
+p_{0}T_{s}^{-\alpha}\frac{d}{dz}\left(\overline{T}^{\alpha}\right) & = & -\overline{\rho}g\\
+p_{0}T_{s}^{-\alpha}\alpha\left(\overline{T}{}^{\alpha-1}\right)\frac{d}{dz}\overline{T} & = & -\frac{\overline{p}}{R\overline{T}}g\\
+\overline{T}Rp_{0}T_{s}^{-\alpha}\alpha\left(\overline{T}{}^{\alpha-1}\right)gC_{p}^{-1} & = & \overline{p}g\\
+Rp_{0}T_{s}^{-\alpha}\alpha\left(\overline{T}{}^{\alpha}\right)C_{p}^{-1} & = & \overline{p}\\
+Rp_{0}T_{s}^{-\alpha}\alpha\left(\overline{T}{}^{\alpha}\right)C_{p}^{-1} & = & p_{0}\left(\overline{T}T_{s}^{-1}\right)^{\kappa}\\
+\left(R/C_{p}\right)\frac{1}{\kappa} & = & 1\\
+1 & = & 1.
 \end{eqnarray}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Here, we can observe that there's an error in the equations above, requiring
- a fix of 
-\begin_inset Formula $\kappa$
-\end_inset
-
-
-\begin_inset Formula 
-\[
-\Rightarrow\kappa=C_{p}/R.
-\]
 
 \end_inset
 

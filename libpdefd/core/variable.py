@@ -323,6 +323,14 @@ class VariableNDSet:
         self.variable_list[key] = data
     
     
+    def debug(self):
+        
+        np.set_printoptions(edgeitems=40, linewidth=100000, formatter=dict(float=lambda x: "%.12g" % x))
+        
+        for i in self.variable_list:
+            print(i.to_numpy_array())
+        
+    
     def set(
         self,
         variable_list_or_class

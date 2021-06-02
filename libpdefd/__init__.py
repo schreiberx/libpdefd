@@ -10,3 +10,4 @@ from libpdefd.core.operator import *
 
 import libpdefd.visualization as visualization
 import libpdefd.tools as tools
+import libpdefd.time as time

@@ -1,7 +1,23 @@
 #! /bin/bash
 BENCHMARK_NAME=vertical_straka
 
-TIME_INTEGRATOR=rk4
+
+#if true; then
+if false; then
+	TIME_INTEGRATOR=erk
+	TIME_INTEGRATION_ORDER=4
+	LEAPFROG_RA_FILTER_VALUE=0
+	DT_SCALING=0.001
+fi
+
+if true; then
+#if false; then
+	TIME_INTEGRATOR=leapfrog
+	TIME_INTEGRATION_ORDER=2
+	LEAPFROG_RA_FILTER_VALUE=0.01
+	LEAPFROG_RA_FILTER_VALUE=0.00
+	DT_SCALING=0.001
+fi
 
 NS_TYPE=nonlinear_a_grid__p_rho
 #NS_TYPE=nonlinear_a_grid__p_t
@@ -12,16 +28,19 @@ NS_TYPE=nonlinear_a_grid__p_rho
 ARGS=""
 ARGS+=" -v 10"
 ARGS+=" --sim-time=900"
-ARGS+=" --time-integrator $TIME_INTEGRATOR"
-ARGS+=" --dt-scaling=0.001"
+ARGS+=" --time-integrator=$TIME_INTEGRATOR"
+ARGS+=" --time-integration-order=$TIME_INTEGRATION_ORDER"
+ARGS+=" --leapfrog-ra-filter-value=$LEAPFROG_RA_FILTER_VALUE"
+ARGS+=" --dt-scaling=$DT_SCALING"
 ARGS+=" --min-spatial-approx-order=4"
 ARGS+=" --ns-type=$NS_TYPE"
 ARGS+=" --benchmark-name=$BENCHMARK_NAME"
 #ARGS+=" --cell-res 1024 1024"
 ARGS+=" --cell-res 256 64"
+#ARGS+=" --cell-res 14 12"
 
-ARGS+=" --output-text-freq=10"
-ARGS+=" --output-plot-simtime-interval=0.1"
+ARGS+=" --output-text-freq=100"
+ARGS+=" --output-plot-simtime-interval=5.0"
 
 
 if true; then

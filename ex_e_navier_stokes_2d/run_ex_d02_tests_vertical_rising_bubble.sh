@@ -1,7 +1,8 @@
 #! /bin/bash
 
 BENCHMARK_NAME=vertical_bump
-TIME_INTEGRATOR=rk4
+TIME_INTEGRATOR=erk
+TIME_INTEGRATION_ORDER=4
 
 #for NS_TYPE in nonlinear_a_grid__p_rho nonlinear_a_grid__rho_t nonlinear_a_grid__p_t; do
 for NS_TYPE in nonlinear_a_grid__p_rho; do
@@ -9,7 +10,8 @@ for NS_TYPE in nonlinear_a_grid__p_rho; do
 	ARGS=""
 	ARGS+=" -v 10"
 	ARGS+=" --sim-time=300"
-	ARGS+=" --time-integrator $TIME_INTEGRATOR"
+	ARGS+=" --time-integrator=$TIME_INTEGRATOR"
+	ARGS+=" --time-integration-order=$TIME_INTEGRATION_ORDER"
 	ARGS+=" --dt-scaling=0.001"
 	ARGS+=" --min-spatial-approx-order=4"
 	ARGS+=" --ns-type=$NS_TYPE"

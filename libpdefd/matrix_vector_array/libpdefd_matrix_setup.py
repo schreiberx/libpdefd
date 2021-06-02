@@ -129,7 +129,7 @@ class matrix_sparse:
     
     def __iadd__(self, data):
         if isinstance(data, matrix_sparse):
-            self._matrix_lil -= data._matrix_lil
+            self._matrix_lil += data._matrix_lil
             """
             Important: Do not do any conversions to lil here because of performance reasons
             This would slow this down extremely

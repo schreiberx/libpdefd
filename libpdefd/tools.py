@@ -67,6 +67,8 @@ def time_integrator(name, f, u, dt):
     
     elif name == "matsuno":
         return time_integrator_matsuno(f, u, dt)
+    
+    raise Exception("Unknown time integrator")
 
 
 

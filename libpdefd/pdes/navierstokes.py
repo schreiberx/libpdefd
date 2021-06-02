@@ -295,8 +295,20 @@ class SimConfig:
         """
         Time integrator
         """
-        self.time_integrator = "rk4"
-        parser.add_argument('--time-integrator', dest="time_integrator", type=str, help="Time integrator")
+        self.time_integration_method = "erk"
+        parser.add_argument('--time-integration-method', dest="time_integration_method", type=str, help="Time integrator")
+        
+        """
+        Time integration order
+        """
+        self.time_integration_order = 2
+        parser.add_argument('--time-integration-order', dest="time_integration_order", type=int, help="Time integration order")
+        
+        """
+        Leapfrog Robert-Asselin filter value
+        """
+        self.time_leapfrog_ra_filter_value = 0
+        parser.add_argument('--time-leapfrog-ra-filter-value', dest="time_leapfrog_ra_filter_value", type=float, help="Filter value for Robert-Asselin filter with Leapfrog")
         
         """
         Maximum simulation time to run simulation for
@@ -373,6 +385,35 @@ class SimConfig:
     
     
     def update(self):
+        
+        def str2bool(v):
+            """
+            https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
+            """
+            if isinstance(v, bool):
+                return v
+            if v.lower() in ('yes', 'true', 't', 'y', '1'):
+                return True
+            elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+                return False
+            else:
+                raise argparse.ArgumentTypeError('Boolean value expected.')
+        
+        self.test_run = str2bool(self.test_run)
+        
+        if self.test_run:
+            
+            self.benchmark_name = "vertical_straka"
+            self.num_timesteps = 10
+            
+            self.dt_scaling = 0.001
+            self.cell_res = np.array([256, 64])
+            self.min_spatial_approx_order = 4
+            
+            self.output_text_freq = 1
+        
+        
+        
         self.domain_size = self.domain_end - self.domain_start
         
         """
@@ -387,12 +428,9 @@ class SimConfig:
         self.cell_res = np.array(self.cell_res)
         
         """
-        Some constants
-        
-        p = rho * T * R
+        Kappa as it is defined in Vallis' book, p. 25
         """
-        self.kappa = self.const_c_p / self.const_R
-        #self.kappa = self.const_R / self.const_c_p
+        self.kappa = self.const_R / self.const_c_p
         
         
         """
@@ -420,35 +458,9 @@ class SimConfig:
             self.const_hyperviscosity_p_order = self.const_hyperviscosity_all_order
             self.const_hyperviscosity_rho_order = self.const_hyperviscosity_all_order
             self.const_hyperviscosity_t_order = self.const_hyperviscosity_all_order
-        
+    
         libpdefd.core.operator.set_default_param('operator_diff__min_approx_order', self.min_spatial_approx_order)
     
-        def str2bool(v):
-            """
-            https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
-            """
-            if isinstance(v, bool):
-                return v
-            if v.lower() in ('yes', 'true', 't', 'y', '1'):
-                return True
-            elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-                return False
-            else:
-                raise argparse.ArgumentTypeError('Boolean value expected.')
-        
-        self.test_run = str2bool(self.test_run)
-        
-        if self.test_run:
-            
-            self.benchmark_name = "vertical_straka"
-            self.num_timesteps = 10
-            
-            self.dt_scaling = 0.001
-            self.cell_res = np.array([256, 64])
-            self.min_spatial_approx_order = 4
-            
-            self.output_text_freq = 1
-        
     
     def compute_p0_ideal_gas(self):
         self.const_p0 = self.const_rho0 * self.const_t0 * self.const_R
@@ -462,61 +474,74 @@ class SimConfig:
     
     def print_config(self):
         print("SimConfig")
-        print(" + const_rho0: "+str(self.const_rho0))
-        print(" + const_p0: "+str(self.const_p0))
-        print(" + const_t0: "+str(self.const_t0))
-        print(" + const_R: "+str(self.const_R))
-        print(" + const_c_p: "+str(self.const_c_p))
-        print(" + kappa: "+str(self.kappa))
-        print(" + const_g: "+str(self.const_g))
+        print(" + Simulation constants:")
+        print(" ++ const_rho0: "+str(self.const_rho0))
+        print(" ++ const_p0: "+str(self.const_p0))
+        print(" ++ const_t0: "+str(self.const_t0))
+        print(" ++ const_R: "+str(self.const_R))
+        print(" ++ const_c_p: "+str(self.const_c_p))
+        print(" ++ kappa: "+str(self.kappa))
+        print(" ++ const_g: "+str(self.const_g))
         
-        print(" + const_viscosity_vel: "+str(self.const_viscosity_vel))
-        print(" + const_viscosity_p: "+str(self.const_viscosity_p))
-        print(" + const_viscosity_rho: "+str(self.const_viscosity_rho))
-        print(" + const_viscosity_t: "+str(self.const_viscosity_t))
+        print(" ++ const_viscosity_vel: "+str(self.const_viscosity_vel))
+        print(" ++ const_viscosity_p: "+str(self.const_viscosity_p))
+        print(" ++ const_viscosity_rho: "+str(self.const_viscosity_rho))
+        print(" ++ const_viscosity_t: "+str(self.const_viscosity_t))
         
-        print(" + const_hyperviscosity_vel: "+str(self.const_hyperviscosity_vel))
-        print(" + const_hyperviscosity_p: "+str(self.const_hyperviscosity_p))
-        print(" + const_hyperviscosity_rho: "+str(self.const_hyperviscosity_rho))
-        print(" + const_hyperviscosity_t: "+str(self.const_hyperviscosity_t))
+        print(" ++ const_hyperviscosity_vel: "+str(self.const_hyperviscosity_vel))
+        print(" ++ const_hyperviscosity_p: "+str(self.const_hyperviscosity_p))
+        print(" ++ const_hyperviscosity_rho: "+str(self.const_hyperviscosity_rho))
+        print(" ++ const_hyperviscosity_t: "+str(self.const_hyperviscosity_t))
 
-        print(" + const_hyperviscosity_vel_order: "+str(self.const_hyperviscosity_vel_order))
-        print(" + const_hyperviscosity_p_order: "+str(self.const_hyperviscosity_p_order))
-        print(" + const_hyperviscosity_rho_order: "+str(self.const_hyperviscosity_rho_order))
-        print(" + const_hyperviscosity_t_order: "+str(self.const_hyperviscosity_t_order))
+        print(" ++ const_hyperviscosity_vel_order: "+str(self.const_hyperviscosity_vel_order))
+        print(" ++ const_hyperviscosity_p_order: "+str(self.const_hyperviscosity_p_order))
+        print(" ++ const_hyperviscosity_rho_order: "+str(self.const_hyperviscosity_rho_order))
+        print(" ++ const_hyperviscosity_t_order: "+str(self.const_hyperviscosity_t_order))
 
-        print(" + dt_scaling: "+str(self.dt_scaling))
-        print(" + vis_variable: "+str(self.vis_variable))
-        print(" + ns_type: "+str(self.ns_type))
-        print(" + min_spatial_approx_order: "+str(self.min_spatial_approx_order))
-        print(" + cell_res: "+str(self.cell_res))
-        print(" + initial_condition_default_center: "+str(self.initial_condition_default_center))
-        print(" + vis_dim_x: "+str(self.vis_dim_x))
-        print(" + vis_dim_y: "+str(self.vis_dim_y))
-        print(" + domain_start: "+str(self.domain_start))
-        print(" + domain_end: "+str(self.domain_end))
-        print(" + sim_domain_aspect: "+str(self.sim_domain_aspect))
-        print(" + boundary_conditions_rho: "+str([[str(i) for i in k] for k in self.boundary_conditions_rho]))
-        print(" + boundary_conditions_u: "+str([[str(i) for i in k] for k in self.boundary_conditions_u]))
-        print(" + boundary_conditions_w: "+str([[str(i) for i in k] for k in self.boundary_conditions_w]))
-        print(" + boundary_conditions_p: "+str([[str(i) for i in k] for k in self.boundary_conditions_p]))
-        print(" + boundary_conditions_t: "+str([[str(i) for i in k] for k in self.boundary_conditions_t]))
-        print(" + boundary_conditions_rho_u: "+str([[str(i) for i in k] for k in self.boundary_conditions_rho_u]))
-        print(" + boundary_conditions_rho_w: "+str([[str(i) for i in k] for k in self.boundary_conditions_rho_w]))
-        print(" + boundary_conditions_rho_t: "+str([[str(i) for i in k] for k in self.boundary_conditions_rho_t]))
-        print(" + timestep_sleep: "+str(self.timestep_sleep))
-        print(" + grid_setup: "+str(self.grid_setup))
-        print(" + plot_contour_info: "+str(self.plot_contour_info))
-        print(" + output_text_freq: "+str(self.output_text_freq))
-        print(" + gui: "+str(self.gui))
-        print(" + output_plot_timesteps_interval: "+str(self.output_plot_timesteps_interval))
-        print(" + output_plot_simtime_interval: "+str(self.output_plot_simtime_interval))
-        print(" + output_plot_filename: "+str(self.output_plot_filename))
-        print(" + output_pickle_filename: "+str(self.output_pickle_filename))
-        print(" + number_of_timesteps: "+str(self.number_of_timesteps))
-        print(" + sim_time: "+str(self.sim_time))
-        print(" + domain_size: "+str(self.domain_size))
-        print(" + vis_slice: "+str(self.vis_slice))
+        print(" + PDE settings:")
+        print(" ++ ns_type: "+str(self.ns_type))
+        print(" ++ domain_start: "+str(self.domain_start))
+        print(" ++ domain_end: "+str(self.domain_end))
+        print(" ++ domain_size: "+str(self.domain_size))
+        print(" ++ boundary_conditions_rho: "+str([[str(i) for i in k] for k in self.boundary_conditions_rho]))
+        print(" ++ boundary_conditions_u: "+str([[str(i) for i in k] for k in self.boundary_conditions_u]))
+        print(" ++ boundary_conditions_w: "+str([[str(i) for i in k] for k in self.boundary_conditions_w]))
+        print(" ++ boundary_conditions_p: "+str([[str(i) for i in k] for k in self.boundary_conditions_p]))
+        print(" ++ boundary_conditions_t: "+str([[str(i) for i in k] for k in self.boundary_conditions_t]))
+        print(" ++ boundary_conditions_rho_u: "+str([[str(i) for i in k] for k in self.boundary_conditions_rho_u]))
+        print(" ++ boundary_conditions_rho_w: "+str([[str(i) for i in k] for k in self.boundary_conditions_rho_w]))
+        print(" ++ boundary_conditions_rho_t: "+str([[str(i) for i in k] for k in self.boundary_conditions_rho_t]))
+
+        print(" + Discretization:")
+        print(" ++ min_spatial_approx_order: "+str(self.min_spatial_approx_order))
+        print(" ++ cell_res: "+str(self.cell_res))
+        print(" ++ grid_setup: "+str(self.grid_setup))
+        print(" ++ time_integration_method: "+str(self.time_integration_method))
+        print(" ++ time_integration_order: "+str(self.time_integration_order))
+        print(" ++ dt_scaling: "+str(self.dt_scaling))
+        print(" ++ number_of_timesteps: "+str(self.number_of_timesteps))
+        print(" ++ sim_time: "+str(self.sim_time))
+
+        print(" + Initial condition:")
+        print(" ++ initial_condition_default_center: "+str(self.initial_condition_default_center))
+        
+        print(" + Visualization:")
+        print(" ++ vis_variable: "+str(self.vis_variable))
+        print(" ++ vis_dim_x: "+str(self.vis_dim_x))
+        print(" ++ vis_dim_y: "+str(self.vis_dim_y))
+        print(" ++ plot_contour_info: "+str(self.plot_contour_info))
+        print(" ++ output_text_freq: "+str(self.output_text_freq))
+        print(" ++ gui: "+str(self.gui))
+        print(" ++ sim_domain_aspect: "+str(self.sim_domain_aspect))
+        print(" ++ timestep_sleep: "+str(self.timestep_sleep))
+        
+        print(" + Output:")
+        print(" ++ output_plot_timesteps_interval: "+str(self.output_plot_timesteps_interval))
+        print(" ++ output_plot_simtime_interval: "+str(self.output_plot_simtime_interval))
+        print(" ++ output_plot_filename: "+str(self.output_plot_filename))
+        print(" ++ output_pickle_filename: "+str(self.output_pickle_filename))
+        print(" ++ vis_slice: "+str(self.vis_slice))
+        
         pass
 
 
@@ -683,9 +708,8 @@ class SimPDE_Base:
         self.op_t__hyperviscosity_t_to_t = gen_visc_term(self.t_grid, self.simconfig.const_hyperviscosity_t_order)
         
         
-        k = 1.0/self.simconfig.kappa
-        self.alpha = 1.0/(k - 1.0)
-        self.beta = k/(k - 1.0)
+        self.alpha = 1.0/(self.simconfig.kappa - 1.0)
+        self.beta = self.simconfig.kappa/(self.simconfig.kappa - 1.0)
         self.R = self.simconfig.const_R
         
         
@@ -976,7 +1000,62 @@ class SimPDE_NSNonlinearA__p_rho(SimPDE_Base):
             src_grid = self.w_grid,
             dst_grid = self.p_grid,
         ).bake()
+        
+        #self.debug()
     
+    
+    def debug_op(self, op):
+        d = op.to_numpy_array()
+        print(d)
+    
+    def debug(self):
+        
+        np.set_printoptions(edgeitems=40, linewidth=100000, formatter=dict(float=lambda x: "%.12g" % x))
+    
+        self.debug_op(self.op_u__grad_du_dx)
+        self.debug_op(self.op_u__grad_du_dz)
+        self.debug_op(self.op_u__grad_dp_dx)
+        self.debug_op(self.op_u__rho_to_u)
+        self.debug_op(self.op_u__w_to_u)
+    
+        self.debug_op(self.op_w__grad_dw_dx)
+        self.debug_op(self.op_w__grad_dw_dz)
+        self.debug_op(self.op_w__grad_dp_dz)
+        self.debug_op(self.op_w__rho_to_w)
+        self.debug_op(self.op_w__u_to_w)
+    
+        self.debug_op(self.op_rho__div_drho_u_dx)
+        self.debug_op(self.op_rho__div_drho_w_dz)
+        self.debug_op(self.op_rho__u_to_rho_u)
+        self.debug_op(self.op_rho__rho_to_rho_u)
+        self.debug_op(self.op_rho__w_to_rho_w)
+        self.debug_op(self.op_rho__rho_to_rho_w)
+    
+        self.debug_op(self.op_p__grad_dp_dx)
+        self.debug_op(self.op_p__grad_dp_dz)
+        self.debug_op(self.op_p__div_du_dx)
+        self.debug_op(self.op_p__div_dw_dz)
+        self.debug_op(self.op_p__u_to_p)
+        self.debug_op(self.op_p__w_to_p)
+    
+    
+        self.debug_op(self.op_u__laplace_u_to_u)
+        self.debug_op(self.op_w__laplace_w_to_w)
+            
+        self.debug_op(self.op_p__laplace_p_to_p)
+        self.debug_op(self.op_rho__laplace_rho_to_rho)
+        self.debug_op(self.op_t__laplace_t_to_t)
+            
+    
+        self.debug_op(self.op_u__hyperviscosity_u_to_u)
+        self.debug_op(self.op_w__hyperviscosity_w_to_w)
+    
+        self.debug_op(self.op_p__hyperviscosity_p_to_p)
+        self.debug_op(self.op_rho__hyperviscosity_rho_to_rho)
+        self.debug_op(self.op_t__hyperviscosity_t_to_t)
+                
+        sys.exit(1)
+        
     
     
     def dU_dt(self, Uset):
@@ -1019,7 +1098,6 @@ class SimPDE_NSNonlinearA__p_rho(SimPDE_Base):
         self.drho_dt =  - self.op_rho__div_drho_u_dx(u_*rho1_)     \
                         - self.op_rho__div_drho_w_dz(w_*rho2_)
         
-
         """
         dp/dt
         """

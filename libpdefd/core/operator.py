@@ -1,7 +1,6 @@
 from libpdefd.core.gridinfo import *
 import libpdefd.core.variable as variable
 import libpdefd.core.fd_weights_explicit as fdwe
-import time
 
 import libpdefd.matrix_vector_array.libpdefd_matrix_setup as matrix_setup
 import libpdefd.matrix_vector_array.libpdefd_matrix_compute as matrix_compute
@@ -27,6 +26,7 @@ class _operator_base:
         self._L_sparse_compute = None
         self._L_sparse_setup = None
         self._name = "TMP"
+        self._baked = False
     
     
     def setup(self, name):
@@ -39,6 +39,7 @@ class _operator_base:
         """
         self._L_sparse_compute = matrix_compute.matrix_sparse(self._L_sparse_setup)
         self._L_sparse_setup = None 
+        self._baked = True
         return self
 
 
@@ -171,6 +172,12 @@ class _operator_base:
         retstr = ""
         retstr += "shape: "+str(self._L_sparse_setup.shape)
         return retstr
+    
+    def to_numpy_array(self):
+        if self._baked:
+            return self._L_sparse_compute.to_numpy_array()
+        else:
+            return self._L_sparse_setup.to_numpy_array()
 
 
 
@@ -1190,14 +1197,14 @@ class OperatorDiffND(_operator_base):
             
             for i in range(0, i_dim):
                 M = libpdefd_vector_array.vector_array_ones(dst_grid.shape[i])
-                retm = retm.kron(M)
+                retm = retm.kron_vector(M)
                 
-            retm = retm.kron(c)
+            retm = retm.kron_vector(c)
             
             for i in range(i_dim+1, num_dims):
                 M = libpdefd_vector_array.vector_array_ones(src_grid.shape[i])
                 
-                retm = retm.kron(M)
+                retm = retm.kron_vector(M)
 
             return retm
         

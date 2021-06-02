@@ -122,6 +122,7 @@ class matrix_sparse:
         raise Exception("Unsupported type data '"+str(type(x))+"'")
     
     
+    
     def dot_add_reshape(self, x, c, dst_shape):
         """
         Compute

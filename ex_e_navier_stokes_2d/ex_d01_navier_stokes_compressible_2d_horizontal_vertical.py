@@ -4,6 +4,7 @@ import sys
 import time
 import numpy as np
 import libpdefd
+import libpdefd.time.time_integrators as time_integrators
 import libpdefd.pdes.navierstokes as pde_navierstokes
 import libpdefd.pdes.navierstokes_benchmarks as pde_navierstokes_benchmarks
 
@@ -242,11 +243,25 @@ output_plot_simtime_interval_next_output = 0
 num_timestep = 0
 simtime = 0
 
-U_leapfrog_prev = None
+
+"""
+Setup time integrator
+"""
+class time_deriv:
+    def comp_du_dt(self, i_U, i_timestamp, i_dt):
+        return simpde.dU_dt(i_U)
+
+time_integrator = time_integrators.TimeIntegrators(
+        time_integration_method = simconfig.time_integration_method,
+        diff_eq_methods = time_deriv(),
+        time_integration_order = simconfig.time_integration_order,
+        leapfrog_ra_filter_value = simconfig.time_leapfrog_ra_filter_value,
+    )
 
 
 import time
 time_start = time.time()
+
 
 while True:
     
@@ -295,18 +310,10 @@ while True:
     if simconfig.num_timesteps != None:
         if num_timestep >= simconfig.num_timesteps:
             break
+        
+    U = time_integrator.time_integration_method.comp_time_integration(U, dt, dt*num_timestep)
+    #U = libpdefd.tools.time_integrator("rk4", simpde.dU_dt, U, dt)
     
-    if simconfig.time_integrator == "leapfrog":
-        
-        U_backup = U
-
-        U = libpdefd.tools.time_integrator_leapfrog(simpde.dU_dt, U, dt, U_leapfrog_prev)
-        
-        U_leapfrog_prev = U_backup
-
-    else:
-        U = libpdefd.tools.time_integrator(simconfig.time_integrator, simpde.dU_dt, U, dt)
-        
     num_timestep += 1
     simtime += dt
     

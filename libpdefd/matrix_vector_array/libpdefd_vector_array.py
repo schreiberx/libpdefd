@@ -125,10 +125,6 @@ class _vector_array_base:
     def __pos__(self):
         return self.__class__(self._data.copy())
     
-    def __str__(self):
-        retstr = "PYSMarray: "
-        retstr += str(self.shape)
-        return retstr
     
     def abs(self):
         return array(np.abs(self._data))
@@ -149,26 +145,40 @@ class _vector_array_base:
     def copy(self):
         return self.__class__(self._data.copy())
     
-    def kron(self, data):
+    
+    def kron_vector(self, data):
+        """
+        We need a Kronecker product to assemble the RHS of the FD operators once extending it to higher dimensions. 
+        """
         assert isinstance(data, _vector_array_base)
+        assert len(data.shape) == 1
+        assert len(self.shape) == 1
         d = np.kron(self._data, data._data)
         return self.__class__(d)
+    
     
     def set_all(self, scalar_value):
         self._data[:] = scalar_value
     
+    """
+    def flatten(self):
+        return self.__class__(self._data.flatten())
+    
+    def num_elements(self):
+        return np.prod(self.shape)
+    """
+    
+    def __str__(self):
+        retstr = "PYSMarray: "
+        retstr += str(self.shape)
+        return retstr
+
     def to_numpy_array(self):
         """
         Return numpy array
         """
         assert isinstance(self._data, np.ndarray)
         return self._data
-
-    def flatten(self):
-        return self.__class__(self._data.flatten())
-    
-    def num_elements(self):
-        return np.prod(self.shape)
 
 
 

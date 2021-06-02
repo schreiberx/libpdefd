@@ -6,6 +6,7 @@ import libpdefd
 #import libpdefd.libpdefd.libpdefd as libpdefd
 #import libpdefd.libpdefd.libpdefd_tools as libpdefd_tools
 
+import libpdefd.time.time_integrators as time_integrators
 import libpdefd.pdes.navierstokes as pde_navierstokes
 
 simconfig = pde_navierstokes.SimConfig(1)
@@ -41,12 +42,8 @@ Use symlog for plot
 use_symlog = False
 
 
-"""
-TODO: Figure out why this doesn't match the simconfig variant
-"""
-k = 1/simconfig.kappa
-alpha = 1.0/(k - 1.0)
-beta = k*alpha
+alpha = 1.0/(simconfig.kappa - 1.0)
+beta = simconfig.kappa*alpha
 
 
 
@@ -55,7 +52,7 @@ def fun_t(z):
 
 
 def fun_p(z):
-    return simconfig.const_p0 * np.power(fun_t(z)/simconfig.const_t0, simconfig.kappa)
+    return simconfig.const_p0 * np.power(fun_t(z)/simconfig.const_t0, 1.0/simconfig.kappa)
 
 def fun_rho(z):
     return fun_p(z)/(simconfig.const_R*fun_t(z))
@@ -338,7 +335,24 @@ def update_plot():
 
     ax.set_ylim(-10, 10)
 
+
 update_plot()
+
+
+"""
+Setup time integrator
+"""
+class time_deriv:
+    def comp_du_dt(self, i_U, i_timestamp, i_dt):
+        return dU_dt(i_U)
+
+
+time_integrator = time_integrators.TimeIntegrators(
+        time_integration_method = simconfig.time_integration_method,
+        diff_eq_methods = time_deriv(),
+        time_integration_order = simconfig.time_integration_order,
+        leapfrog_ra_filter_value = simconfig.time_leapfrog_ra_filter_value,
+    )
 
 
 import time
@@ -347,17 +361,7 @@ time_start = time.time()
 prev_timestep = None
 for i in range(simconfig.num_timesteps):
     
-    import time
-    #time.sleep(0.1)
-
-    if 1:
-        U = libpdefd.tools.time_integrator_RK4(dU_dt, U, dt)
-        
-    else:
-
-        prev_timestep_next = U.copy()
-        U = libpdefd.tools.time_integrator_leapfrog(dU_dt, U, dt, prev_timestep)
-        prev_timestep = prev_timestep_next
+    U = time_integrator.time_integration_method.comp_time_integration(U, dt, dt*i)
 
     if simconfig.output_freq != None:
         if i % simconfig.output_freq == 0:
