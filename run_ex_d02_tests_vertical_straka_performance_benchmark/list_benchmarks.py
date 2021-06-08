@@ -103,6 +103,8 @@ ns_type_ = ['nonlinear_a_grid__p_rho']
 spatial_order_ = [2, 4, 6, 8]
 spatial_order_ = [4]
 
+args_list = []
+
 for spatial_order in spatial_order_:
     for ns_type in ns_type_:
         #for time_integration_method in ["erk", "leapfrog"]:
@@ -130,7 +132,7 @@ for spatial_order in spatial_order_:
                                 sim_time = sim_time
                             )
 
-                            print(" ".join(args))
+                            args_list.append(args)
 
                     elif time_integration_method == "leapfrog":
 
@@ -151,5 +153,9 @@ for spatial_order in spatial_order_:
 
                             )
 
-                            print(" ".join(args))
+                            args_list.append(args)
 
+
+if __name__ == "__main__":
+    for args in args_list:
+        print(" ".join(args))
