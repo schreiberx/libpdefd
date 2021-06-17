@@ -15,7 +15,7 @@ if true; then
 	TIME_INTEGRATOR=leapfrog
 	TIME_INTEGRATION_ORDER=2
 	LEAPFROG_RA_FILTER_VALUE=0.01
-	LEAPFROG_RA_FILTER_VALUE=0.00
+	#LEAPFROG_RA_FILTER_VALUE=0.00
 	DT_SCALING=0.001
 fi
 
@@ -28,9 +28,9 @@ NS_TYPE=nonlinear_a_grid__p_rho
 ARGS=""
 ARGS+=" -v 10"
 ARGS+=" --sim-time=900"
-ARGS+=" --time-integrator=$TIME_INTEGRATOR"
+ARGS+=" --time-integration-method=$TIME_INTEGRATOR"
 ARGS+=" --time-integration-order=$TIME_INTEGRATION_ORDER"
-ARGS+=" --leapfrog-ra-filter-value=$LEAPFROG_RA_FILTER_VALUE"
+ARGS+=" --time-leapfrog-ra-filter-value=$LEAPFROG_RA_FILTER_VALUE"
 ARGS+=" --dt-scaling=$DT_SCALING"
 ARGS+=" --min-spatial-approx-order=4"
 ARGS+=" --ns-type=$NS_TYPE"

@@ -167,7 +167,7 @@ if plot_generate:
         vis.show(block=gui_block)
     
     def get_simtime_str(simtime):
-        return "{:012.4f}".format(simtime)
+        return "{:013.4f}".format(simtime)
 
     
     def do_file_plots(num_timestep, simtime):
@@ -320,16 +320,23 @@ while True:
     if simconfig.timestep_sleep > 0:
         time.sleep(simconfig.timestep_sleep)
     
-    if np.isnan(U[0][0,0]):
-        raise Exception("NaN detected")
+    if simconfig.stop_nan_simulation:
+        if np.isnan(U[0][0,0]):
+            raise Exception("NaN detected")
     
 
 
+print("*")
+print("Simulation finished")
+print("*")
 time_end = time.time()
-print("Time: "+str(time_end-time_start))
+total_time = time_end-time_start
+print("Time: "+str(total_time))
 
 total_seconds_per_timestep = (time_end - time_start)/float(num_timestep)
-print(" + total_seconds_per_timestep: "+str(seconds_per_timestep))
+print(" + total_time: "+str(total_time))
+print(" + number_of_timesteps: "+str(num_timestep))
+print(" + total_seconds_per_timestep: "+str(total_seconds_per_timestep))
 
 if simconfig.gui:
     do_gui_plots(num_timestep, True)
