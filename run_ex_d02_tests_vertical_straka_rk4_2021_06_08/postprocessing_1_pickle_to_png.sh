@@ -25,7 +25,7 @@ fi
 
 
 if [ "#$1" == "#print_parallel_jobs" ]; then
-	for DIR in output_plot__bench_*__nstype_*__ti_*__order_*/; do
+	for DIR in output_plot__*/; do
 		for VARNAME in u w p rho t p_diff rho_diff t_diff pot_t pot_t_diff; do
 			OUTPUT_PREFIX=""
 
