@@ -344,6 +344,13 @@ class SimConfig:
         """
         self.num_timesteps = None
 
+        
+        """
+        Stop simulation if there are NaN
+        """
+        self.stop_nan_simulation = False
+        parser.add_argument('--stop-nan-simulation', dest="stop_nan_simulation", type=str2bool, help="Stop simulation if NaN have been detected")
+
         """
         Test run
         """
