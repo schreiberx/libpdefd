@@ -39,7 +39,12 @@ fi
 # Setup important directory environment variables #####################
 #######################################################################
 
-SCRIPTDIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
+_SCRIPTDIR="$(dirname "${BASH_SOURCE[0]}")"
+SCRIPTDIR=$(cd "${_SCRIPTDIR}"; pwd -P)
+
+if [ "$(uname -s)#" == "Darwin#" ]; then
+	export MPLBACKEND=Qt5Agg
+fi
 
 #source "$SCRIPTDIR/python_config.sh"
 

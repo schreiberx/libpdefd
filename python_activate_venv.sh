@@ -1,5 +1,6 @@
 
-SCRIPTDIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
+_SCRIPTDIR="$(dirname "${BASH_SOURCE[0]}")"
+SCRIPTDIR=$(cd "${_SCRIPTDIR}"; pwd -P)
 
 # Load further config
 source "$SCRIPTDIR/python_config.sh" || return 1

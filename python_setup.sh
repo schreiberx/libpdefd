@@ -18,8 +18,9 @@ echo "Installing additional packages..."
 conda install -y -c intel scipy || exit 1
 conda install -y -c intel numpy || exit 1
 
-echo "Updating Conda..."
-conda update -y --all
+# Don't update Conda to stick to this particular version
+#echo "Updating Conda..."
+#conda update -y --all
 
 
 #

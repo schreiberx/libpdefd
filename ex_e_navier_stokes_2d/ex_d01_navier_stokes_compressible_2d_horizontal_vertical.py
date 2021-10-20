@@ -320,9 +320,9 @@ while True:
     if simconfig.timestep_sleep > 0:
         time.sleep(simconfig.timestep_sleep)
     
-    if simconfig.stop_nan_simulation:
-        if np.isnan(U[0][0,0]):
-            raise Exception("NaN detected")
+    #if simconfig.stop_nan_simulation:
+    #    if np.isnan(U[0][0,0]):
+    #        raise Exception("NaN detected")
     
 
 

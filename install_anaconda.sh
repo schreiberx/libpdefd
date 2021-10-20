@@ -9,16 +9,21 @@ source  python_config.sh || exit 1
 
 P=$(pwd)
 
-cd "/tmp" || exit 1
 
-wget -c "${URL}" || exit 1
+if [ ! -d ${PREFIX} ]; then
+	cd "/tmp" || exit 1
 
-echo "Installing Anaconda to '${PREFIX}'..."
+	wget -c "${URL}" || exit 1
 
-PREFIX="$VENV_DIR"
-sh "${INSTALLER}" -b -u -p ${PREFIX} || exit 1
+
+	PREFIX="$VENV_DIR"
+	echo "Installing Anaconda to '${PREFIX}'..."
+
+	sh "${INSTALLER}" -b -u -p ${PREFIX} || exit 1
+else
+	echo "Directory '${PREFIX}' of Anaconda installation already exists => skipping installation"
+fi
 
 echo
 echo "Installation of Anaconda finished"
-echo
 echo
