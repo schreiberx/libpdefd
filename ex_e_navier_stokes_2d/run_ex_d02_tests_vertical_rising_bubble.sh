@@ -10,7 +10,7 @@ for NS_TYPE in nonlinear_a_grid__p_rho; do
 	ARGS=""
 	ARGS+=" -v 10"
 	ARGS+=" --sim-time=300"
-	ARGS+=" --time-integrator=$TIME_INTEGRATOR"
+	ARGS+=" --time-integration-method=$TIME_INTEGRATOR"
 	ARGS+=" --time-integration-order=$TIME_INTEGRATION_ORDER"
 	ARGS+=" --dt-scaling=0.001"
 	ARGS+=" --min-spatial-approx-order=4"
